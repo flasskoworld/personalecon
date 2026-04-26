@@ -30,7 +30,7 @@ export default function Landing() {
 
       {/* NAV */}
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/6" style={{ background: "rgba(8,10,15,0.92)", backdropFilter: "blur(12px)" }}>
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 md:h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div
               className="w-8 h-8 rounded-lg flex items-center justify-center text-base font-black"
@@ -67,14 +67,14 @@ export default function Landing() {
           background: `linear-gradient(to bottom, rgba(8,10,15,0.3) 0%, rgba(8,10,15,0.7) 50%, rgba(8,10,15,1) 100%), url(${HERO_BG}) center/cover no-repeat`,
         }}
       >
-        <div className="max-w-6xl mx-auto px-6 py-24 grid md:grid-cols-2 gap-12 items-center">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-16 md:py-24 grid md:grid-cols-2 gap-8 md:gap-12 items-center">
           <div>
             <div className="inline-flex items-center gap-2 text-xs font-mono tracking-widest text-emerald-400 uppercase bg-emerald-400/10 border border-emerald-400/20 px-3 py-1.5 rounded-full mb-6">
               <Zap size={11} />
               Your Personal Finance Command Center
             </div>
             <h1
-              className="text-5xl md:text-6xl font-black leading-[1.05] mb-6"
+              className="text-4xl sm:text-5xl md:text-6xl font-black leading-[1.05] mb-6"
               style={{ fontFamily: "'Syne', sans-serif", letterSpacing: "-0.03em" }}
             >
               Take Control of Your{" "}
@@ -82,7 +82,7 @@ export default function Landing() {
                 Personal Economy
               </span>
             </h1>
-            <p className="text-lg text-slate-400 leading-relaxed mb-8 max-w-lg">
+            <p className="text-base text-slate-400 leading-relaxed mb-8 max-w-lg">
               Enter your income, expenses, debts, and investments. Get a real game plan — with a live payoff timeline, savings tracker, and strategy built around your actual numbers.
             </p>
             <div className="flex flex-wrap gap-3">
@@ -101,7 +101,7 @@ export default function Landing() {
                 See Demo Dashboard
               </button>
             </div>
-            <div className="flex items-center gap-6 mt-8">
+            <div className="flex flex-wrap items-center gap-3 mt-8">
               {[
                 "Free to use",
                 "No account needed",
@@ -165,10 +165,10 @@ export default function Landing() {
       </section>
 
       {/* FEATURES */}
-      <section className="py-24 max-w-6xl mx-auto px-6">
+      <section className="py-16 md:py-24 max-w-6xl mx-auto px-4 sm:px-6">
         <div className="text-center mb-16">
           <h2
-            className="text-3xl md:text-4xl font-black mb-4"
+            className="text-2xl sm:text-3xl md:text-4xl font-black mb-4"
             style={{ fontFamily: "'Syne', sans-serif", letterSpacing: "-0.02em" }}
           >
             Everything in one place
@@ -236,9 +236,9 @@ export default function Landing() {
       </section>
 
       {/* HOW IT WORKS */}
-      <section className="py-24 border-t border-white/6">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center mb-16">
+      <section className="py-16 md:py-24 border-t border-white/6">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-10 md:mb-16">
             <h2
               className="text-3xl md:text-4xl font-black mb-4"
               style={{ fontFamily: "'Syne', sans-serif", letterSpacing: "-0.02em" }}
@@ -247,7 +247,7 @@ export default function Landing() {
             </h2>
             <p className="text-slate-400">Answer a few questions and your dashboard is ready.</p>
           </div>
-          <div className="grid md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
             {[
               { step: "01", title: "Enter Your Income", desc: "Add your pay amount, frequency, and next payday date.", color: "#10b981" },
               { step: "02", title: "List Your Expenses", desc: "Add your monthly bills, subscriptions, and spending categories.", color: "#d4af37" },
@@ -277,7 +277,7 @@ export default function Landing() {
       {/* STATS STRIP */}
       <section className="py-16 border-t border-b border-white/6" style={{ background: "rgba(16,185,129,0.04)" }}>
         <div className="max-w-6xl mx-auto px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 text-center">
             {[
               { value: "$0", label: "Cost to use" },
               { value: "5", label: "Dashboard tabs" },
@@ -285,7 +285,7 @@ export default function Landing() {
               { value: "100%", label: "Private — data on your device" },
             ].map((s) => (
               <div key={s.label}>
-                <div className="text-3xl font-black text-emerald-400 mb-1" style={{ fontFamily: "'Syne', sans-serif" }}>{s.value}</div>
+                <div className="text-2xl sm:text-3xl font-black text-emerald-400 mb-1" style={{ fontFamily: "'Syne', sans-serif" }}>{s.value}</div>
                 <div className="text-sm text-slate-500">{s.label}</div>
               </div>
             ))}
@@ -295,27 +295,27 @@ export default function Landing() {
 
       {/* CTA */}
       <section className="py-24">
-        <div className="max-w-3xl mx-auto px-6 text-center">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 text-center">
           <h2
-            className="text-4xl md:text-5xl font-black mb-6"
+            className="text-3xl sm:text-4xl md:text-5xl font-black mb-6"
             style={{ fontFamily: "'Syne', sans-serif", letterSpacing: "-0.03em" }}
           >
             Stop wondering where your money went.
           </h2>
-          <p className="text-slate-400 text-lg mb-10 max-w-xl mx-auto">
+          <p className="text-slate-400 text-base md:text-lg mb-8 md:mb-10 max-w-xl mx-auto">
             Build your personal economy in minutes. Your numbers, your plan, your path out.
           </p>
-          <div className="flex flex-wrap justify-center gap-4">
+          <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-3 sm:gap-4">
             <button
               onClick={handleGetStarted}
-              className="flex items-center gap-2 px-8 py-4 rounded-xl text-lg font-bold text-black transition-all hover:opacity-90 hover:scale-[1.02]"
+              className="flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-4 rounded-xl text-base md:text-lg font-bold text-black transition-all hover:opacity-90 hover:scale-[1.02]"
               style={{ background: "linear-gradient(135deg, #10b981, #059669)", boxShadow: "0 8px 40px rgba(16,185,129,0.35)" }}
             >
               Build My Plan Free <ArrowRight size={18} />
             </button>
             <button
               onClick={handleDemo}
-              className="flex items-center gap-2 px-8 py-4 rounded-xl text-lg font-semibold text-white border border-white/15 hover:border-white/30 transition-all"
+              className="flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-4 rounded-xl text-base md:text-lg font-semibold text-white border border-white/15 hover:border-white/30 transition-all"
             >
               View Sample Dashboard <ChevronRight size={18} />
             </button>
@@ -325,7 +325,7 @@ export default function Landing() {
 
       {/* FOOTER */}
       <footer className="border-t border-white/6 py-5">
-        <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-center justify-between gap-3 text-center md:text-left">
           <div className="flex items-center gap-2">
             <div
               className="w-6 h-6 rounded-md flex items-center justify-center text-xs font-black"

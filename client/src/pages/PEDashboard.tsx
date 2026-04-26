@@ -236,10 +236,10 @@ export default function Dashboard() {
 
       {/* HEADER */}
       <header className="border-b border-white/6 sticky top-0 z-40" style={{ background: "rgba(8,10,15,0.95)", backdropFilter: "blur(12px)" }}>
-        <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-md flex items-center justify-center text-sm font-black" style={{ background: "linear-gradient(135deg, #10b981, #059669)", color: "#fff" }}>£</div>
-            <span className="text-sm font-bold" style={{ fontFamily: "'Syne', sans-serif" }}>Personal Economy</span>
+            <span className="text-sm font-bold hidden xs:inline sm:inline" style={{ fontFamily: "'Syne', sans-serif" }}>Personal Economy</span>
             {state.isDemo && <span className="text-xs bg-amber-500/15 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full font-mono">DEMO</span>}
             {isPro ? (
               <span className="text-xs bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-mono">PRO ✓</span>
@@ -259,15 +259,15 @@ export default function Dashboard() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowReset(true)}
-              className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-white border border-white/8 hover:border-white/20 px-3 py-1.5 rounded-lg transition-all"
+              className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-white border border-white/8 hover:border-white/20 px-2 sm:px-3 py-1.5 rounded-lg transition-all"
             >
-              <RotateCcw size={12} /> Reset
+              <RotateCcw size={12} /> <span className="hidden sm:inline">Reset</span>
             </button>
             <button
               onClick={() => navigate("/pro")}
-              className="text-xs text-slate-500 hover:text-white border border-white/8 hover:border-white/20 px-3 py-1.5 rounded-lg transition-all"
+              className="text-xs text-slate-500 hover:text-white border border-white/8 hover:border-white/20 px-2 sm:px-3 py-1.5 rounded-lg transition-all"
             >
-              ← Home
+              <span className="hidden sm:inline">← Home</span><span className="sm:hidden">←</span>
             </button>
           </div>
         </div>
@@ -278,26 +278,26 @@ export default function Dashboard() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-2xl font-black" style={{ fontFamily: "'Syne', sans-serif" }}>{state.profile.name}'s Economy</h1>
+              <h1 className="text-xl sm:text-2xl font-black" style={{ fontFamily: "'Syne', sans-serif" }}>{state.profile.name}'s Economy</h1>
               <p className="text-xs text-slate-500 mt-0.5">{new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}</p>
             </div>
             <div className="text-right">
               <div className="text-xs text-slate-500 mb-0.5">Net Worth</div>
-              <div className={`text-2xl font-black ${netWorth >= 0 ? "text-emerald-400" : "text-rose-400"}`} style={{ fontFamily: "'Syne', sans-serif" }}>
+              <div className={`text-xl sm:text-2xl font-black ${netWorth >= 0 ? "text-emerald-400" : "text-rose-400"}`} style={{ fontFamily: "'Syne', sans-serif" }}>
                 <AnimNum value={netWorth} prefix={currency} />
               </div>
             </div>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
             {[
               { label: "Monthly Income", value: monthlyIncome, color: "text-white", icon: <DollarSign size={14} /> },
               { label: "Total Debt", value: totalDebt, color: "text-rose-400", icon: <AlertTriangle size={14} /> },
               { label: "Savings Stack", value: state.totalSaved, color: "text-emerald-400", icon: <Target size={14} /> },
               { label: "Portfolio Value", value: totalInvestmentValue, color: "text-indigo-400", icon: <TrendingUp size={14} /> },
             ].map((s) => (
-              <div key={s.label} className="rounded-xl border border-white/8 bg-white/3 px-4 py-3">
+              <div key={s.label} className="rounded-xl border border-white/8 bg-white/3 px-3 sm:px-4 py-2.5 sm:py-3">
                 <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-1">{s.icon}{s.label}</div>
-                <div className={`text-xl font-black ${s.color}`} style={{ fontFamily: "'Syne', sans-serif" }}>
+                <div className={`text-lg sm:text-xl font-black ${s.color}`} style={{ fontFamily: "'Syne', sans-serif" }}>
                   <AnimNum value={s.value} prefix={currency} />
                 </div>
               </div>
@@ -317,7 +317,7 @@ export default function Dashboard() {
                   if (t.isPro && !isPro) { navigate("/pro/pricing"); return; }
                   setActiveTab(t.id as typeof activeTab);
                 }}
-                className={`flex items-center gap-1.5 px-4 py-3.5 text-sm font-medium whitespace-nowrap border-b-2 transition-all ${
+                className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-4 py-3 sm:py-3.5 text-xs sm:text-sm font-medium whitespace-nowrap border-b-2 transition-all ${
                   activeTab === t.id
                     ? "border-emerald-500 text-white"
                     : "border-transparent text-slate-500 hover:text-slate-300"
@@ -331,14 +331,14 @@ export default function Dashboard() {
       </div>
 
       {/* CONTENT */}
-      <main className="max-w-7xl mx-auto px-6 py-8">
+      <main className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-8">
 
         {/* ── OVERVIEW TAB ─────────────────────────────────────────────────── */}
         {activeTab === "overview" && (
           <div className="space-y-6">
             {/* Cash flow alert */}
             {monthlyLeftover > 0 ? (
-              <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4 flex items-start gap-3">
+              <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 sm:p-4 flex items-start gap-2 sm:gap-3">
                 <CheckCircle2 size={18} className="text-emerald-400 mt-0.5 shrink-0" />
                 <div>
                   <div className="text-sm font-semibold text-white">You have <span className="text-emerald-400">{currency}{Math.round(monthlyLeftover).toLocaleString()}/mo</span> left after expenses.</div>
@@ -346,7 +346,7 @@ export default function Dashboard() {
                 </div>
               </div>
             ) : (
-              <div className="rounded-xl border border-rose-500/20 bg-rose-500/5 p-4 flex items-start gap-3">
+              <div className="rounded-xl border border-rose-500/20 bg-rose-500/5 p-3 sm:p-4 flex items-start gap-2 sm:gap-3">
                 <AlertTriangle size={18} className="text-rose-400 mt-0.5 shrink-0" />
                 <div>
                   <div className="text-sm font-semibold text-white">Expenses exceed income by <span className="text-rose-400">{currency}{Math.abs(Math.round(monthlyLeftover)).toLocaleString()}/mo</span></div>
@@ -355,7 +355,7 @@ export default function Dashboard() {
               </div>
             )}
 
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
               {/* Cash Flow Breakdown */}
               <div className={card}>
                 <h3 className="text-sm font-bold text-white mb-4" style={{ fontFamily: "'Syne', sans-serif" }}>Cash Flow Breakdown</h3>
@@ -502,7 +502,7 @@ export default function Dashboard() {
                         className={`rounded-2xl border p-5 transition-all ${isTarget ? "border-opacity-40" : "border-white/8"} ${isPaidOff ? "opacity-50" : ""}`}
                         style={{ borderColor: isTarget ? debt.color : undefined, background: isTarget ? debt.color + "08" : "rgba(255,255,255,0.02)" }}
                       >
-                        <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-start justify-between mb-3 gap-2">
                           <div className="flex items-center gap-2.5">
                             <div className="w-3 h-3 rounded-full shrink-0" style={{ background: debt.color }} />
                             <div>
@@ -528,7 +528,7 @@ export default function Dashboard() {
 
                         <div className="flex items-end justify-between mb-3">
                           <div>
-                            <div className="text-2xl font-black" style={{ color: isPaidOff ? "#10b981" : debt.color, fontFamily: "'Syne', sans-serif" }}>
+                            <div className="text-xl sm:text-2xl font-black" style={{ color: isPaidOff ? "#10b981" : debt.color, fontFamily: "'Syne', sans-serif" }}>
                               {currency}{Math.round(debt.balance).toLocaleString()}
                             </div>
                             <div className="text-xs text-slate-500">remaining · min. {currency}{debt.minimumPayment}/mo</div>
@@ -593,7 +593,7 @@ export default function Dashboard() {
         {/* ── BUDGET TAB ───────────────────────────────────────────────────── */}
         {activeTab === "budget" && (
           <div className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
               {/* Pie chart */}
               <div className={card}>
                 <h3 className="text-sm font-bold text-white mb-4" style={{ fontFamily: "'Syne', sans-serif" }}>Spending Breakdown</h3>
@@ -691,7 +691,7 @@ export default function Dashboard() {
                 </div>
               )}
               {/* Milestones */}
-              <div className="grid grid-cols-4 gap-2 mb-5">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4 sm:mb-5">
                 {[500, 1000, 5000, state.profile?.savingsGoal || 10000].map((m) => (
                   <div key={m} className={`rounded-lg border p-2 text-center transition-all ${state.totalSaved >= m ? "border-emerald-500/40 bg-emerald-500/10" : "border-white/8 opacity-50"}`}>
                     {state.totalSaved >= m ? <CheckCircle2 size={14} className="text-emerald-400 mx-auto mb-1" /> : <div className="w-3.5 h-3.5 rounded-full border border-white/20 mx-auto mb-1" />}
@@ -775,7 +775,7 @@ export default function Dashboard() {
                     const gainPct = inv.amountInvested > 0 ? (gain / inv.amountInvested) * 100 : 0;
                     return (
                       <div key={inv.id} className="rounded-2xl border border-white/8 bg-white/3 p-4">
-                        <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-start justify-between mb-3 gap-2">
                           <div className="flex items-center gap-2.5">
                             <div className="w-3 h-3 rounded-full shrink-0" style={{ background: inv.color }} />
                             <div>

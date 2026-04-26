@@ -64,7 +64,7 @@ export default function PEPricing() {
 
       {/* NAV */}
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/6" style={{ background: "rgba(8,10,15,0.92)", backdropFilter: "blur(12px)" }}>
-        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
           <button
             onClick={() => navigate("/pro")}
             className="flex items-center gap-2.5 hover:opacity-80 transition-opacity"
@@ -89,7 +89,7 @@ export default function PEPricing() {
         </div>
       </nav>
 
-      <div className="max-w-5xl mx-auto px-6 pt-32 pb-24">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-24 sm:pt-32 pb-16 sm:pb-24">
 
         {/* Header */}
         <div className="text-center mb-14">
@@ -98,7 +98,7 @@ export default function PEPricing() {
             Simple, transparent pricing
           </div>
           <h1
-            className="text-4xl md:text-5xl font-black mb-4"
+            className="text-3xl sm:text-4xl md:text-5xl font-black mb-4"
             style={{ fontFamily: "'Syne', sans-serif", letterSpacing: "-0.03em" }}
           >
             Start free. Upgrade when{" "}
@@ -113,10 +113,10 @@ export default function PEPricing() {
 
         {/* Billing Toggle */}
         <div className="flex justify-center mb-10">
-          <div className="flex items-center gap-1 rounded-xl border border-white/10 p-1" style={{ background: "rgba(255,255,255,0.04)" }}>
+          <div className="flex items-center gap-1 rounded-xl border border-white/10 p-1 w-full sm:w-auto" style={{ background: "rgba(255,255,255,0.04)" }}>
             <button
               onClick={() => setBilling("monthly")}
-              className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${
+              className={`flex-1 sm:flex-none px-4 sm:px-5 py-2 rounded-lg text-sm font-semibold transition-all ${
                 billing === "monthly" ? "bg-white/10 text-white" : "text-slate-400 hover:text-white"
               }`}
             >
@@ -137,10 +137,10 @@ export default function PEPricing() {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 max-w-3xl mx-auto">
 
           {/* Free Tier */}
-          <div className="rounded-2xl border border-white/10 p-8" style={{ background: "rgba(255,255,255,0.03)" }}>
+          <div className="rounded-2xl border border-white/10 p-5 sm:p-8" style={{ background: "rgba(255,255,255,0.03)" }}>
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "#64748b22", color: "#64748b" }}>
@@ -149,7 +149,7 @@ export default function PEPricing() {
                 <span className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Free</span>
               </div>
               <div className="flex items-end gap-1 mb-2">
-                <span className="text-5xl font-black text-white" style={{ fontFamily: "'Syne', sans-serif" }}>$0</span>
+                <span className="text-4xl sm:text-5xl font-black text-white" style={{ fontFamily: "'Syne', sans-serif" }}>$0</span>
                 <span className="text-slate-500 mb-2">/forever</span>
               </div>
               <p className="text-sm text-slate-400">Everything you need to start taking control of your finances.</p>
@@ -174,7 +174,7 @@ export default function PEPricing() {
 
           {/* Pro Tier */}
           <div
-            className="rounded-2xl border p-8 relative overflow-hidden"
+            className="rounded-2xl border p-5 sm:p-8 relative overflow-hidden"
             style={{
               borderColor: "#10b98144",
               background: "linear-gradient(135deg, rgba(16,185,129,0.08) 0%, rgba(8,10,15,0.95) 100%)",
@@ -195,7 +195,7 @@ export default function PEPricing() {
                 <span className="text-sm font-semibold text-emerald-400 uppercase tracking-wider">Pro</span>
               </div>
               <div className="flex items-end gap-1 mb-2">
-                <span className="text-5xl font-black text-white" style={{ fontFamily: "'Syne', sans-serif" }}>
+                <span className="text-4xl sm:text-5xl font-black text-white" style={{ fontFamily: "'Syne', sans-serif" }}>
                   ${billing === "monthly" ? monthlyPrice : yearlyMonthly}
                 </span>
                 <span className="text-slate-500 mb-2">/month</span>
@@ -236,7 +236,7 @@ export default function PEPricing() {
         </div>
 
         {/* Trust Badges */}
-        <div className="flex flex-wrap justify-center gap-8 mt-14">
+        <div className="flex flex-wrap justify-center gap-4 sm:gap-8 mt-8 sm:mt-14">
           {[
             { icon: <Shield size={16} />, text: "Secure checkout via Stripe" },
             { icon: <Lock size={16} />, text: "Cancel anytime" },
@@ -295,7 +295,7 @@ export default function PEPricing() {
       </div>
       {/* BOTTOM FOOTER BAR */}
       <footer className="border-t border-white/6 py-4 mt-8">
-        <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-3">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-center justify-between gap-2 text-center">
           <div className="flex items-center gap-2">
             <div className="w-5 h-5 rounded-md flex items-center justify-center text-xs font-black" style={{ background: "linear-gradient(135deg, #10b981, #059669)", color: "#fff" }}>£</div>
             <span className="text-xs font-semibold text-slate-500" style={{ fontFamily: "'Syne', sans-serif" }}>Personal Economy</span>

@@ -54,3 +54,9 @@
 - [ ] Gate Monthly cash flow breakdown behind Pro
 - [x] Wire upgrade CTA to /pro/pricing Stripe checkout
 - [x] Show "Free Plan" vs "Pro" badge in dashboard header
+
+## Mobile Optimization
+- [ ] Fix PELanding mobile layout (hero text overflow, feature cards, stats grid, footer)
+- [ ] Fix PEDashboard mobile layout (header nav, tabs overflow, KPI grid, debt cards, charts, payment inputs)
+- [ ] Fix PEOnboarding mobile layout (step forms, input fields, navigation buttons)
+- [ ] Fix PEPricing mobile layout (pricing cards, feature list, CTA)
