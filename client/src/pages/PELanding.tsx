@@ -3,7 +3,7 @@
 // Asymmetric layout, editorial typography, strong CTA
 
 import { useLocation } from "wouter";
-import { PoweredByFooter } from "@/components/PoweredByFooter";
+import { PoweredByFooter, PoweredByBadge } from "@/components/PoweredByFooter";
 import { ArrowRight, TrendingUp, Shield, Target, BarChart3, Zap, CheckCircle2, ChevronRight } from "lucide-react";
 import { useStore } from "@/hooks/usePEStore";
 
@@ -324,7 +324,7 @@ export default function Landing() {
       </section>
 
       {/* FOOTER */}
-      <footer className="border-t border-white/6 py-8">
+      <footer className="border-t border-white/6 py-5">
         <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <div
@@ -335,10 +335,10 @@ export default function Landing() {
             </div>
             <span className="text-sm font-semibold text-slate-400" style={{ fontFamily: "'Syne', sans-serif" }}>Personal Economy</span>
           </div>
+          <PoweredByBadge />
           <p className="text-xs text-slate-600">All data is stored locally on your device. Nothing is sent to any server.</p>
         </div>
       </footer>
-      <PoweredByFooter />
     </div>
   );
 }

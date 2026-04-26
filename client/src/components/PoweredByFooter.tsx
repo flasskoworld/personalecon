@@ -1,25 +1,34 @@
-const SE_LOGO_URL = "/manus-storage/SE_globe_logo_white_d3acc63a.png";
+// StreetEconomics branding — inline footer badge
+// Placed inside existing footer bars across all product pages
+
+const SE_LOGO_URL = "/manus-storage/SEsimplelogo_white_b48ea2d5.png";
 const SE_LINK = "https://beacons.ai/streetecon";
 
-export function PoweredByFooter() {
+export function PoweredByBadge() {
   return (
-    <footer className="w-full border-t border-white/10 bg-[#0d1117] py-4 px-6 mt-auto">
-      <div className="max-w-6xl mx-auto flex items-center justify-center gap-2">
-        <span className="text-xs text-slate-500 tracking-wide">Powered by</span>
-        <a
-          href={SE_LINK}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-2 opacity-70 hover:opacity-100 transition-opacity"
-          aria-label="StreetEconomics"
-        >
-          <img
-            src={SE_LOGO_URL}
-            alt="StreetEconomics"
-            className="h-5 w-auto object-contain"
-          />
-        </a>
-      </div>
-    </footer>
+    <a
+      href={SE_LINK}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center gap-1.5 opacity-60 hover:opacity-100 transition-opacity group"
+      aria-label="Powered by StreetEconomics"
+    >
+      <span className="text-xs text-slate-500 group-hover:text-slate-400 transition-colors whitespace-nowrap">
+        Powered by
+      </span>
+      <img
+        src={SE_LOGO_URL}
+        alt="StreetEconomics"
+        className="h-4 w-4 object-contain"
+      />
+      <span className="text-xs font-semibold text-slate-400 group-hover:text-slate-200 transition-colors whitespace-nowrap">
+        Street Economics
+      </span>
+    </a>
   );
+}
+
+// Legacy export — now a no-op since branding is embedded in each page's footer bar
+export function PoweredByFooter() {
+  return null;
 }

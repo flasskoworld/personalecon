@@ -2,7 +2,7 @@
 // Free tier + Pro tier with Stripe checkout
 
 import { useState } from "react";
-import { PoweredByFooter } from "@/components/PoweredByFooter";
+import { PoweredByFooter, PoweredByBadge } from "@/components/PoweredByFooter";
 import { useLocation } from "wouter";
 import { CheckCircle2, ArrowRight, Zap, Shield, TrendingUp, BarChart3, Target, Star, Lock } from "lucide-react";
 import { trpc } from "@/lib/trpc";
@@ -293,7 +293,17 @@ export default function PEPricing() {
           </button>
         </div>
       </div>
-      <PoweredByFooter />
+      {/* BOTTOM FOOTER BAR */}
+      <footer className="border-t border-white/6 py-4 mt-8">
+        <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 rounded-md flex items-center justify-center text-xs font-black" style={{ background: "linear-gradient(135deg, #10b981, #059669)", color: "#fff" }}>£</div>
+            <span className="text-xs font-semibold text-slate-500" style={{ fontFamily: "'Syne', sans-serif" }}>Personal Economy</span>
+          </div>
+          <PoweredByBadge />
+          <p className="text-xs text-slate-600">All data is stored locally on your device. Nothing is sent to any server.</p>
+        </div>
+      </footer>
     </div>
   );
 }
