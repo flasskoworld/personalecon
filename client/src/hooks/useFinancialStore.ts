@@ -1,11 +1,11 @@
 // Hustle Board — Financial Store Hook
-// Persists debt payments, savings, and monthly log to localStorage
+// Persists debt payments, savings, strategy choice, and monthly log to localStorage
 
 import { useState, useEffect, useCallback } from "react";
-import { DEBTS_INITIAL, Debt, ALLOCATION } from "@/lib/financialData";
+import { DEBTS_INITIAL, Debt, DebtStrategy, totalMonthlyInterest } from "@/lib/financialData";
 
 export interface MonthlyLog {
-  month: string; // "May 2026"
+  month: string;
   savingsAdded: number;
   debtPaid: number;
   notes: string;
@@ -16,16 +16,18 @@ export interface FinancialState {
   totalSaved: number;
   monthlyLogs: MonthlyLog[];
   savingsGoal: number;
+  strategy: DebtStrategy;
   lastUpdated: string;
 }
 
-const STORAGE_KEY = "hustle-board-v1";
+const STORAGE_KEY = "hustle-board-v2";
 
 const DEFAULT_STATE: FinancialState = {
   debts: DEBTS_INITIAL,
   totalSaved: 0,
   monthlyLogs: [],
   savingsGoal: 5000,
+  strategy: "avalanche",
   lastUpdated: new Date().toISOString(),
 };
 
@@ -34,7 +36,17 @@ export function useFinancialStore() {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        return JSON.parse(stored) as FinancialState;
+        const parsed = JSON.parse(stored) as FinancialState;
+        // Ensure APR fields exist (migration from v1)
+        const merged = {
+          ...DEFAULT_STATE,
+          ...parsed,
+          debts: DEBTS_INITIAL.map((init) => {
+            const saved = parsed.debts?.find((d) => d.id === init.id);
+            return saved ? { ...init, balance: saved.balance, paid: saved.paid } : init;
+          }),
+        };
+        return merged;
       }
     } catch {
       // ignore
@@ -79,6 +91,10 @@ export function useFinancialStore() {
     setState((prev) => ({ ...prev, savingsGoal: goal }));
   }, []);
 
+  const setStrategy = useCallback((strategy: DebtStrategy) => {
+    setState((prev) => ({ ...prev, strategy }));
+  }, []);
+
   const resetAll = useCallback(() => {
     setState(DEFAULT_STATE);
   }, []);
@@ -87,6 +103,7 @@ export function useFinancialStore() {
   const totalPaid = state.debts.reduce((s, d) => s + d.paid, 0);
   const savingsProgress = Math.min(100, (state.totalSaved / state.savingsGoal) * 100);
   const debtProgress = Math.min(100, (totalPaid / (totalPaid + totalDebt)) * 100);
+  const currentMonthlyInterest = totalMonthlyInterest(state.debts);
 
   return {
     state,
@@ -94,10 +111,12 @@ export function useFinancialStore() {
     addSavings,
     addMonthlyLog,
     updateSavingsGoal,
+    setStrategy,
     resetAll,
     totalDebt,
     totalPaid,
     savingsProgress,
     debtProgress,
+    currentMonthlyInterest,
   };
 }

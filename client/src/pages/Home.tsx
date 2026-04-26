@@ -1,8 +1,8 @@
 // Hustle Board — Main Dashboard Page
 // Design: Dark Urban Fintech | Syne + Inter | Emerald/Rose/Amber accents
-// Sections: Overview KPIs, Debt Tracker, Budget Breakdown, Savings Progress, Game Plan
+// Sections: Overview KPIs, Debt Tracker (with APR + strategy toggle), Budget, Savings, Game Plan
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { AnimatedNumber } from "@/components/AnimatedNumber";
 import { useFinancialStore } from "@/hooks/useFinancialStore";
 import {
@@ -16,8 +16,13 @@ import {
   CUTS_RECOMMENDED,
   FREED_PER_MONTH,
   ALLOCATION,
+  DebtStrategy,
+  sortDebtsByStrategy,
+  simulatePayoff,
+  monthlyInterest,
   formatCurrency,
   formatCurrencyDecimal,
+  formatPercent,
 } from "@/lib/financialData";
 import {
   AreaChart,
@@ -31,6 +36,8 @@ import {
   Pie,
   Cell,
   Legend,
+  BarChart,
+  Bar,
 } from "recharts";
 import {
   TrendingUp,
@@ -41,18 +48,23 @@ import {
   Zap,
   ChevronRight,
   Plus,
-  Minus,
   RotateCcw,
   BookOpen,
   BarChart3,
   Wallet,
   List,
+  Flame,
+  Snowflake,
+  Info,
 } from "lucide-react";
 import { toast } from "sonner";
 
 type Tab = "overview" | "debts" | "budget" | "savings" | "plan";
 
-const HERO_BG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663192782655/GXoMctSFQX8j75azAgdFxw/finance-hero-bg-6aaKdDxdDUR89mJ4xvzFh8.webp";
+const HERO_BG =
+  "https://d2xsxph8kpxj0f.cloudfront.net/310519663192782655/GXoMctSFQX8j75azAgdFxw/finance-hero-bg-6aaKdDxdDUR89mJ4xvzFh8.webp";
+
+const MONTHLY_DEBT_BUDGET = 500;
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<Tab>("overview");
@@ -64,11 +76,13 @@ export default function Home() {
     state,
     makePayment,
     addSavings,
+    setStrategy,
     resetAll,
     totalDebt,
     totalPaid,
     savingsProgress,
     debtProgress,
+    currentMonthlyInterest,
   } = useFinancialStore();
 
   const handlePayment = (debtId: string) => {
@@ -99,6 +113,22 @@ export default function Home() {
     setSavingsInput("");
     toast.success(`${formatCurrency(amount)} added to your savings stack!`);
   };
+
+  // Sorted debts by current strategy
+  const sortedDebts = useMemo(
+    () => sortDebtsByStrategy(state.debts, state.strategy),
+    [state.debts, state.strategy]
+  );
+
+  // Simulation results for both strategies
+  const snowballSim = useMemo(
+    () => simulatePayoff(state.debts, "snowball", MONTHLY_DEBT_BUDGET),
+    [state.debts]
+  );
+  const avalancheSim = useMemo(
+    () => simulatePayoff(state.debts, "avalanche", MONTHLY_DEBT_BUDGET),
+    [state.debts]
+  );
 
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: "overview", label: "Overview", icon: <BarChart3 size={16} /> },
@@ -180,13 +210,13 @@ export default function Home() {
                 icon: <TrendingUp size={14} className="text-emerald-400" />,
               },
               {
-                label: "Monthly Left",
-                value: MONTHLY_LEFTOVER,
+                label: "Interest/Month",
+                value: currentMonthlyInterest,
                 prefix: "$",
-                color: "text-amber-400",
-                bg: "bg-amber-500/10",
-                border: "border-amber-500/20",
-                icon: <DollarSign size={14} className="text-amber-400" />,
+                color: "text-rose-400",
+                bg: "bg-rose-500/10",
+                border: "border-rose-500/20",
+                icon: <Flame size={14} className="text-rose-400" />,
               },
             ].map((kpi) => (
               <div
@@ -221,7 +251,6 @@ export default function Home() {
                   ? "border-emerald-400 text-emerald-400"
                   : "border-transparent text-slate-400 hover:text-slate-200"
               }`}
-              style={{ fontFamily: "'Inter', sans-serif" }}
             >
               {tab.icon}
               {tab.label}
@@ -230,16 +259,31 @@ export default function Home() {
         </div>
 
         <div className="py-6">
-          {activeTab === "overview" && <OverviewTab state={state} totalDebt={totalDebt} savingsProgress={savingsProgress} debtProgress={debtProgress} />}
+          {activeTab === "overview" && (
+            <OverviewTab
+              state={state}
+              totalDebt={totalDebt}
+              savingsProgress={savingsProgress}
+              debtProgress={debtProgress}
+              currentMonthlyInterest={currentMonthlyInterest}
+              snowballSim={snowballSim}
+              avalancheSim={avalancheSim}
+            />
+          )}
           {activeTab === "debts" && (
             <DebtsTab
               state={state}
+              sortedDebts={sortedDebts}
               paymentInputs={paymentInputs}
               setPaymentInputs={setPaymentInputs}
               handlePayment={handlePayment}
               totalDebt={totalDebt}
               totalPaid={totalPaid}
               debtProgress={debtProgress}
+              currentMonthlyInterest={currentMonthlyInterest}
+              setStrategy={setStrategy}
+              snowballSim={snowballSim}
+              avalancheSim={avalancheSim}
             />
           )}
           {activeTab === "budget" && <BudgetTab />}
@@ -256,7 +300,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Reset button */}
+      {/* Reset */}
       <div className="max-w-6xl mx-auto px-6 pb-8 flex justify-end">
         {!showReset ? (
           <button
@@ -274,10 +318,7 @@ export default function Home() {
             >
               Yes, reset
             </button>
-            <button
-              onClick={() => setShowReset(false)}
-              className="text-xs text-slate-400 hover:text-slate-200"
-            >
+            <button onClick={() => setShowReset(false)} className="text-xs text-slate-400 hover:text-slate-200">
               Cancel
             </button>
           </div>
@@ -289,30 +330,113 @@ export default function Home() {
 
 // ─── OVERVIEW TAB ─────────────────────────────────────────────────────────────
 
-function OverviewTab({ state, totalDebt, savingsProgress, debtProgress }: {
+function OverviewTab({
+  state, totalDebt, savingsProgress, debtProgress, currentMonthlyInterest, snowballSim, avalancheSim,
+}: {
   state: ReturnType<typeof useFinancialStore>["state"];
   totalDebt: number;
   savingsProgress: number;
   debtProgress: number;
+  currentMonthlyInterest: number;
+  snowballSim: ReturnType<typeof simulatePayoff>;
+  avalancheSim: ReturnType<typeof simulatePayoff>;
 }) {
   return (
     <div className="space-y-6">
-      {/* Alert Banner */}
-      <div className="rounded-xl border border-amber-500/30 bg-amber-500/8 px-5 py-4 flex items-start gap-3">
-        <Zap size={18} className="text-amber-400 mt-0.5 shrink-0" />
+      {/* Interest Bleed Alert */}
+      <div className="rounded-xl border border-rose-500/30 bg-rose-500/8 px-5 py-4 flex items-start gap-3">
+        <Flame size={18} className="text-rose-400 mt-0.5 shrink-0" />
         <div>
-          <p className="text-sm font-semibold text-amber-300" style={{ fontFamily: "'Syne', sans-serif" }}>
-            Your money isn't disappearing — it's unallocated.
+          <p className="text-sm font-semibold text-rose-300" style={{ fontFamily: "'Syne', sans-serif" }}>
+            You're bleeding <span className="text-rose-400">{formatCurrency(currentMonthlyInterest)}/month</span> in interest alone.
           </p>
           <p className="text-xs text-slate-400 mt-1">
-            You have <span className="text-amber-400 font-semibold">{formatCurrency(MONTHLY_LEFTOVER)}/mo</span> after expenses. Without a plan, it vanishes. With this board, every dollar has a job.
+            Debt 2 (22.74% APR) costs <strong className="text-rose-300">$89/mo</strong> just to exist. Debt 3 (17%) costs <strong className="text-rose-300">$87/mo</strong>. That's money going nowhere. The faster you attack these, the less you lose.
+          </p>
+        </div>
+      </div>
+
+      {/* Strategy Comparison */}
+      <div className="rounded-xl border border-white/8 bg-card p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <Target size={16} className="text-amber-400" />
+          <h3 className="text-sm font-bold text-white" style={{ fontFamily: "'Syne', sans-serif" }}>
+            Snowball vs. Avalanche — What the Math Says
+          </h3>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          {/* Snowball */}
+          <div className="rounded-xl border border-sky-500/20 bg-sky-500/5 p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Snowflake size={16} className="text-sky-400" />
+              <span className="text-sm font-bold text-sky-400" style={{ fontFamily: "'Syne', sans-serif" }}>Snowball</span>
+              <span className="text-xs text-slate-500">(smallest balance first)</span>
+            </div>
+            <div className="space-y-2 text-xs">
+              <div className="flex justify-between">
+                <span className="text-slate-400">Months to debt-free</span>
+                <span className="text-white font-mono font-bold">{snowballSim.months} months</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Total interest paid</span>
+                <span className="text-rose-400 font-mono font-bold">{formatCurrency(snowballSim.totalInterest)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Debt-free by</span>
+                <span className="text-white font-mono font-bold">~{getDebtFreeDate(snowballSim.months)}</span>
+              </div>
+            </div>
+            <div className="mt-3 pt-3 border-t border-white/5">
+              <p className="text-xs text-slate-400">
+                <strong className="text-sky-400">Pro:</strong> Quick wins on small debts keep you motivated.
+              </p>
+            </div>
+          </div>
+
+          {/* Avalanche */}
+          <div className="rounded-xl border border-orange-500/30 bg-orange-500/8 p-4 relative">
+            <div className="absolute top-3 right-3 text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded font-semibold">
+              RECOMMENDED
+            </div>
+            <div className="flex items-center gap-2 mb-3">
+              <Flame size={16} className="text-orange-400" />
+              <span className="text-sm font-bold text-orange-400" style={{ fontFamily: "'Syne', sans-serif" }}>Avalanche</span>
+              <span className="text-xs text-slate-500">(highest APR first)</span>
+            </div>
+            <div className="space-y-2 text-xs">
+              <div className="flex justify-between">
+                <span className="text-slate-400">Months to debt-free</span>
+                <span className="text-white font-mono font-bold">{avalancheSim.months} months</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Total interest paid</span>
+                <span className="text-emerald-400 font-mono font-bold">{formatCurrency(avalancheSim.totalInterest)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Debt-free by</span>
+                <span className="text-white font-mono font-bold">~{getDebtFreeDate(avalancheSim.months)}</span>
+              </div>
+            </div>
+            <div className="mt-3 pt-3 border-t border-white/5">
+              <p className="text-xs text-slate-400">
+                <strong className="text-orange-400">Pro:</strong> Saves you{" "}
+                <strong className="text-emerald-400">{formatCurrency(snowballSim.totalInterest - avalancheSim.totalInterest)}</strong>{" "}
+                and finishes {snowballSim.months - avalancheSim.months} months faster.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Verdict Banner */}
+        <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-4 py-3">
+          <p className="text-xs text-emerald-300 leading-relaxed">
+            <strong className="text-emerald-400">Bottom line:</strong> Debt 4 and 5 have 0% APR — wipe those first regardless of strategy (they're free wins). Then switch to <strong>Avalanche</strong>: attack Debt 2 (22.74%) first since it's costing you the most per month. You'll save <strong>{formatCurrency(snowballSim.totalInterest - avalancheSim.totalInterest)}</strong> in interest and be debt-free {snowballSim.months - avalancheSim.months} months sooner.
           </p>
         </div>
       </div>
 
       {/* Progress Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Debt Elimination Progress */}
         <div className="rounded-xl border border-white/8 bg-card p-5 card-glow-rose">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs text-slate-400 uppercase tracking-wider">Debt Elimination</span>
@@ -323,18 +447,10 @@ function OverviewTab({ state, totalDebt, savingsProgress, debtProgress }: {
           </div>
           <p className="text-xs text-slate-500 mb-3">remaining of $15,602 total</p>
           <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-            <div
-              className="h-full progress-rose rounded-full transition-all duration-1000"
-              style={{ width: `${debtProgress}%` }}
-            />
-          </div>
-          <div className="flex justify-between mt-2">
-            <span className="text-xs text-slate-500">$0</span>
-            <span className="text-xs text-slate-500">$15,602</span>
+            <div className="h-full progress-rose rounded-full transition-all duration-1000" style={{ width: `${debtProgress}%` }} />
           </div>
         </div>
 
-        {/* Savings Progress */}
         <div className="rounded-xl border border-white/8 bg-card p-5 card-glow-emerald">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs text-slate-400 uppercase tracking-wider">Savings Stack</span>
@@ -345,19 +461,12 @@ function OverviewTab({ state, totalDebt, savingsProgress, debtProgress }: {
           </div>
           <p className="text-xs text-slate-500 mb-3">of {formatCurrency(state.savingsGoal)} goal</p>
           <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-            <div
-              className="h-full progress-emerald rounded-full transition-all duration-1000"
-              style={{ width: `${savingsProgress}%` }}
-            />
-          </div>
-          <div className="flex justify-between mt-2">
-            <span className="text-xs text-slate-500">$0</span>
-            <span className="text-xs text-slate-500">{formatCurrency(state.savingsGoal)}</span>
+            <div className="h-full progress-emerald rounded-full transition-all duration-1000" style={{ width: `${savingsProgress}%` }} />
           </div>
         </div>
       </div>
 
-      {/* Monthly Cash Flow Breakdown */}
+      {/* Cash Flow */}
       <div className="rounded-xl border border-white/8 bg-card p-5">
         <h3 className="text-sm font-bold text-white mb-4" style={{ fontFamily: "'Syne', sans-serif" }}>
           Monthly Cash Flow Breakdown
@@ -366,7 +475,7 @@ function OverviewTab({ state, totalDebt, savingsProgress, debtProgress }: {
           {[
             { label: "Monthly Income", value: INCOME.monthly, color: "text-emerald-400", bar: "progress-emerald", pct: 100 },
             { label: "Fixed Expenses", value: -TOTAL_EXPENSES, color: "text-rose-400", bar: "progress-rose", pct: (TOTAL_EXPENSES / INCOME.monthly) * 100 },
-            { label: "Recommended Debt Payment", value: -ALLOCATION.debtPayment, color: "text-amber-400", bar: "progress-amber", pct: (ALLOCATION.debtPayment / INCOME.monthly) * 100 },
+            { label: "Debt Payment", value: -ALLOCATION.debtPayment, color: "text-amber-400", bar: "progress-amber", pct: (ALLOCATION.debtPayment / INCOME.monthly) * 100 },
             { label: "Savings Target", value: -ALLOCATION.savings, color: "text-emerald-400", bar: "progress-emerald", pct: (ALLOCATION.savings / INCOME.monthly) * 100 },
             { label: "Buffer / Flex", value: MONTHLY_LEFTOVER - ALLOCATION.debtPayment - ALLOCATION.savings, color: "text-slate-300", bar: "bg-slate-600", pct: ((MONTHLY_LEFTOVER - ALLOCATION.debtPayment - ALLOCATION.savings) / INCOME.monthly) * 100 },
           ].map((row) => (
@@ -375,10 +484,7 @@ function OverviewTab({ state, totalDebt, savingsProgress, debtProgress }: {
                 <span className="text-xs text-slate-400">{row.label}</span>
               </div>
               <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
-                <div
-                  className={`h-full ${row.bar} rounded-full`}
-                  style={{ width: `${Math.abs(row.pct)}%` }}
-                />
+                <div className={`h-full ${row.bar} rounded-full`} style={{ width: `${Math.abs(row.pct)}%` }} />
               </div>
               <div className={`w-20 text-right text-xs font-mono font-semibold ${row.color}`}>
                 {row.value >= 0 ? "+" : ""}{formatCurrency(row.value)}
@@ -388,7 +494,7 @@ function OverviewTab({ state, totalDebt, savingsProgress, debtProgress }: {
         </div>
       </div>
 
-      {/* Recommended Cuts */}
+      {/* Quick Wins */}
       <div className="rounded-xl border border-white/8 bg-card p-5">
         <div className="flex items-center gap-2 mb-4">
           <Zap size={16} className="text-amber-400" />
@@ -415,100 +521,172 @@ function OverviewTab({ state, totalDebt, savingsProgress, debtProgress }: {
           </div>
         </div>
       </div>
-
-      {/* Debt Priority Order */}
-      <div className="rounded-xl border border-white/8 bg-card p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <Target size={16} className="text-rose-400" />
-          <h3 className="text-sm font-bold text-white" style={{ fontFamily: "'Syne', sans-serif" }}>
-            Debt Attack Order (Snowball Method)
-          </h3>
-        </div>
-        <div className="space-y-2">
-          {state.debts.map((debt, i) => (
-            <div key={debt.id} className="flex items-center gap-3 py-2">
-              <div
-                className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
-                style={{ background: debt.color + "22", color: debt.color, border: `1px solid ${debt.color}44` }}
-              >
-                {i + 1}
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-white">{debt.name}</span>
-                  <span className="text-sm font-mono font-bold" style={{ color: debt.color }}>
-                    {formatCurrency(debt.balance)}
-                  </span>
-                </div>
-                <div className="h-1 bg-white/5 rounded-full mt-1 overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all duration-700"
-                    style={{
-                      width: `${Math.max(0, 100 - (debt.balance / debt.originalBalance) * 100)}%`,
-                      background: debt.color,
-                    }}
-                  />
-                </div>
-              </div>
-              {debt.balance === 0 && (
-                <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }
 
-// ─── DEBTS TAB ────────────────────────────────────────────────────────────────
+// ─── DEBT TRACKER TAB ─────────────────────────────────────────────────────────
 
-function DebtsTab({ state, paymentInputs, setPaymentInputs, handlePayment, totalDebt, totalPaid, debtProgress }: {
+function DebtsTab({
+  state, sortedDebts, paymentInputs, setPaymentInputs, handlePayment,
+  totalDebt, totalPaid, debtProgress, currentMonthlyInterest,
+  setStrategy, snowballSim, avalancheSim,
+}: {
   state: ReturnType<typeof useFinancialStore>["state"];
+  sortedDebts: ReturnType<typeof sortDebtsByStrategy>;
   paymentInputs: Record<string, string>;
   setPaymentInputs: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   handlePayment: (id: string) => void;
   totalDebt: number;
   totalPaid: number;
   debtProgress: number;
+  currentMonthlyInterest: number;
+  setStrategy: (s: DebtStrategy) => void;
+  snowballSim: ReturnType<typeof simulatePayoff>;
+  avalancheSim: ReturnType<typeof simulatePayoff>;
 }) {
+  const interestBarData = state.debts
+    .filter((d) => d.apr > 0)
+    .map((d) => ({
+      name: d.name,
+      monthly: parseFloat(monthlyInterest(d).toFixed(2)),
+      apr: parseFloat((d.apr * 100).toFixed(2)),
+      color: d.color,
+    }))
+    .sort((a, b) => b.monthly - a.monthly);
+
   return (
     <div className="space-y-5">
-      {/* Summary */}
+      {/* Strategy Toggle */}
+      <div className="rounded-xl border border-white/8 bg-card p-5">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+          <div>
+            <h3 className="text-sm font-bold text-white" style={{ fontFamily: "'Syne', sans-serif" }}>
+              Payoff Strategy
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">Choose how to prioritize your debt attacks</p>
+          </div>
+          {/* Toggle */}
+          <div className="flex rounded-lg overflow-hidden border border-white/10">
+            <button
+              onClick={() => setStrategy("snowball")}
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-all ${
+                state.strategy === "snowball"
+                  ? "bg-sky-500/20 text-sky-400 border-r border-sky-500/30"
+                  : "text-slate-400 hover:text-slate-200 border-r border-white/10"
+              }`}
+            >
+              <Snowflake size={14} />
+              Snowball
+            </button>
+            <button
+              onClick={() => setStrategy("avalanche")}
+              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-all ${
+                state.strategy === "avalanche"
+                  ? "bg-orange-500/20 text-orange-400"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              <Flame size={14} />
+              Avalanche
+            </button>
+          </div>
+        </div>
+
+        {/* Strategy description */}
+        {state.strategy === "snowball" ? (
+          <div className="rounded-lg bg-sky-500/8 border border-sky-500/15 px-4 py-3 text-xs text-sky-300">
+            <strong className="text-sky-400">Snowball:</strong> Pay minimums on everything, dump extra cash on the smallest balance first. Great for motivation — you get quick wins. Costs you <strong>{formatCurrency(snowballSim.totalInterest)}</strong> in interest over <strong>{snowballSim.months} months</strong>.
+          </div>
+        ) : (
+          <div className="rounded-lg bg-orange-500/8 border border-orange-500/15 px-4 py-3 text-xs text-orange-300">
+            <strong className="text-orange-400">Avalanche:</strong> Pay minimums on everything, dump extra cash on the highest APR first. Mathematically optimal — saves you <strong className="text-emerald-400">{formatCurrency(snowballSim.totalInterest - avalancheSim.totalInterest)}</strong> vs. snowball and finishes <strong className="text-emerald-400">{snowballSim.months - avalancheSim.months} months sooner</strong> ({avalancheSim.months} months total).
+          </div>
+        )}
+
+        {/* Comparison mini-table */}
+        <div className="grid grid-cols-3 gap-2 mt-4">
+          {[
+            { label: "Strategy", snowball: "Snowball ❄️", avalanche: "Avalanche 🔥" },
+            { label: "Months", snowball: `${snowballSim.months} mo`, avalanche: `${avalancheSim.months} mo` },
+            { label: "Total Interest", snowball: formatCurrency(snowballSim.totalInterest), avalanche: formatCurrency(avalancheSim.totalInterest) },
+          ].map((row) => (
+            <div key={row.label} className="text-center">
+              <div className="text-xs text-slate-500 mb-1">{row.label}</div>
+              <div className={`text-xs font-mono font-semibold px-2 py-1 rounded ${state.strategy === "snowball" ? "bg-sky-500/10 text-sky-400" : "bg-white/5 text-slate-400"}`}>{row.snowball}</div>
+              <div className="text-slate-600 text-xs my-0.5">vs</div>
+              <div className={`text-xs font-mono font-semibold px-2 py-1 rounded ${state.strategy === "avalanche" ? "bg-orange-500/10 text-orange-400" : "bg-white/5 text-slate-400"}`}>{row.avalanche}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Interest Cost Chart */}
+      <div className="rounded-xl border border-white/8 bg-card p-5">
+        <div className="flex items-center gap-2 mb-1">
+          <Flame size={15} className="text-rose-400" />
+          <h3 className="text-sm font-bold text-white" style={{ fontFamily: "'Syne', sans-serif" }}>
+            Monthly Interest Bleeding — {formatCurrencyDecimal(currentMonthlyInterest)}/mo total
+          </h3>
+        </div>
+        <p className="text-xs text-slate-500 mb-4">This is money you pay just for having the debt — it buys you nothing.</p>
+        <div className="space-y-3">
+          {interestBarData.map((d) => (
+            <div key={d.name} className="flex items-center gap-3">
+              <div className="w-28 shrink-0">
+                <p className="text-xs text-slate-300 truncate">{d.name}</p>
+                <p className="text-xs font-mono" style={{ color: d.color }}>{d.apr}% APR</p>
+              </div>
+              <div className="flex-1 h-5 bg-white/5 rounded overflow-hidden relative">
+                <div
+                  className="h-full rounded transition-all duration-700 flex items-center justify-end pr-2"
+                  style={{
+                    width: `${(d.monthly / interestBarData[0].monthly) * 100}%`,
+                    background: `linear-gradient(90deg, ${d.color}66, ${d.color})`,
+                    minWidth: "60px",
+                  }}
+                >
+                  <span className="text-xs font-mono font-bold text-white">${d.monthly}/mo</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Summary Stats */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: "Remaining Debt", value: totalDebt, color: "text-rose-400" },
-          { label: "Total Paid", value: totalPaid, color: "text-emerald-400" },
+          { label: "Remaining Debt", value: totalDebt, color: "text-rose-400", prefix: "$" },
+          { label: "Total Paid", value: totalPaid, color: "text-emerald-400", prefix: "$" },
           { label: "Progress", value: debtProgress, color: "text-amber-400", suffix: "%", decimals: 1 },
         ].map((s) => (
           <div key={s.label} className="rounded-xl border border-white/8 bg-card p-4 text-center">
             <div className={`text-2xl font-black stat-number ${s.color}`}>
-              <AnimatedNumber
-                value={s.value}
-                prefix={s.suffix ? "" : "$"}
-                suffix={s.suffix || ""}
-                decimals={s.decimals || 0}
-              />
+              <AnimatedNumber value={s.value} prefix={s.prefix || ""} suffix={s.suffix || ""} decimals={s.decimals || 0} />
             </div>
             <div className="text-xs text-slate-500 mt-1">{s.label}</div>
           </div>
         ))}
       </div>
 
-      {/* Debt Cards */}
+      {/* Debt Cards — sorted by active strategy */}
       <div className="space-y-4">
-        {state.debts.map((debt, i) => {
+        {sortedDebts.map((debt, i) => {
           const pct = Math.max(0, 100 - (debt.balance / debt.originalBalance) * 100);
           const isPaidOff = debt.balance === 0;
+          const intCost = monthlyInterest(debt);
+          const isTarget = i === 0 && !isPaidOff;
+
           return (
             <div
               key={debt.id}
               className={`rounded-xl border bg-card p-5 transition-all ${
-                isPaidOff ? "border-emerald-500/30 opacity-70" : "border-white/8"
+                isPaidOff ? "border-emerald-500/30 opacity-60" : isTarget ? "border-white/15" : "border-white/8"
               }`}
-              style={!isPaidOff ? { boxShadow: `0 0 0 1px ${debt.color}22, 0 4px 20px ${debt.color}10` } : {}}
+              style={isTarget ? { boxShadow: `0 0 0 1px ${debt.color}44, 0 4px 24px ${debt.color}14` } : {}}
             >
-              <div className="flex items-start justify-between mb-3">
+              <div className="flex items-start justify-between mb-3 flex-wrap gap-2">
                 <div className="flex items-center gap-2">
                   <div
                     className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold"
@@ -517,17 +695,21 @@ function DebtsTab({ state, paymentInputs, setPaymentInputs, handlePayment, total
                     #{i + 1}
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-white" style={{ fontFamily: "'Syne', sans-serif" }}>
-                      {debt.name}
-                      {i === 0 && !isPaidOff && (
-                        <span className="ml-2 text-xs bg-emerald-400/15 text-emerald-400 px-1.5 py-0.5 rounded">
-                          ATTACK FIRST
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h4 className="text-sm font-bold text-white" style={{ fontFamily: "'Syne', sans-serif" }}>
+                        {debt.name}
+                      </h4>
+                      {isTarget && (
+                        <span className="text-xs px-1.5 py-0.5 rounded font-semibold" style={{ background: debt.color + "22", color: debt.color }}>
+                          {state.strategy === "avalanche" ? "🔥 ATTACK NOW" : "❄️ ATTACK NOW"}
                         </span>
                       )}
-                    </h4>
-                    <p className="text-xs text-slate-500">
-                      Started at {formatCurrency(debt.originalBalance)} · Paid {formatCurrency(debt.paid)}
-                    </p>
+                    </div>
+                    <div className="flex items-center gap-3 mt-0.5">
+                      <p className="text-xs text-slate-500">
+                        Started {formatCurrency(debt.originalBalance)} · Paid {formatCurrency(debt.paid)}
+                      </p>
+                    </div>
                   </div>
                 </div>
                 <div className="text-right">
@@ -537,11 +719,19 @@ function DebtsTab({ state, paymentInputs, setPaymentInputs, handlePayment, total
                       <span className="text-sm font-bold">PAID OFF</span>
                     </div>
                   ) : (
-                    <div
-                      className="text-2xl font-black stat-number"
-                      style={{ color: debt.color, fontFamily: "'Syne', sans-serif" }}
-                    >
-                      {formatCurrency(debt.balance)}
+                    <div>
+                      <div className="text-2xl font-black stat-number" style={{ color: debt.color, fontFamily: "'Syne', sans-serif" }}>
+                        {formatCurrency(debt.balance)}
+                      </div>
+                      {debt.apr > 0 && (
+                        <div className="text-xs text-right mt-0.5 space-y-0.5">
+                          <div className="font-mono text-rose-400">{formatPercent(debt.apr)} APR</div>
+                          <div className="text-slate-500">{formatCurrencyDecimal(intCost)}/mo interest</div>
+                        </div>
+                      )}
+                      {debt.apr === 0 && (
+                        <div className="text-xs text-emerald-400 font-mono text-right mt-0.5">0% APR — Free!</div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -568,9 +758,7 @@ function DebtsTab({ state, paymentInputs, setPaymentInputs, handlePayment, total
                       type="number"
                       placeholder="Payment amount"
                       value={paymentInputs[debt.id] || ""}
-                      onChange={(e) =>
-                        setPaymentInputs((p) => ({ ...p, [debt.id]: e.target.value }))
-                      }
+                      onChange={(e) => setPaymentInputs((p) => ({ ...p, [debt.id]: e.target.value }))}
                       className="w-full bg-white/5 border border-white/10 rounded-lg pl-7 pr-3 py-2 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30"
                       onKeyDown={(e) => e.key === "Enter" && handlePayment(debt.id)}
                     />
@@ -588,17 +776,37 @@ function DebtsTab({ state, paymentInputs, setPaymentInputs, handlePayment, total
           );
         })}
       </div>
+
+      {/* Payoff Timeline */}
+      <div className="rounded-xl border border-white/8 bg-card p-5">
+        <h3 className="text-sm font-bold text-white mb-3" style={{ fontFamily: "'Syne', sans-serif" }}>
+          Projected Payoff Timeline ({state.strategy === "avalanche" ? "Avalanche 🔥" : "Snowball ❄️"})
+        </h3>
+        <div className="space-y-2">
+          {(state.strategy === "avalanche" ? avalancheSim : snowballSim).payoffOrder.map((p) => (
+            <div key={p.name} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 size={14} className="text-emerald-400" />
+                <span className="text-sm text-slate-300">{p.name}</span>
+              </div>
+              <div className="text-right">
+                <span className="text-xs font-mono text-slate-400">Month {p.month}</span>
+                <span className="text-xs text-slate-500 ml-2">~{getDebtFreeDate(p.month)}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
 
 // ─── BUDGET TAB ───────────────────────────────────────────────────────────────
 
-const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: { name: string; value: number }[]; label?: string }) => {
+const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: { name: string; value: number }[]; label?: string }) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-card border border-white/10 rounded-lg px-3 py-2 text-xs">
-        <p className="text-slate-400 mb-1">{label}</p>
         {payload.map((p) => (
           <p key={p.name} className="text-white font-semibold">{p.name}: {formatCurrency(p.value)}</p>
         ))}
@@ -615,7 +823,6 @@ function BudgetTab() {
 
   return (
     <div className="space-y-5">
-      {/* Income vs Expenses Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {[
           { label: "Monthly Income", value: INCOME.monthly, color: "text-emerald-400", sub: "2 paychecks" },
@@ -632,7 +839,6 @@ function BudgetTab() {
         ))}
       </div>
 
-      {/* Pie Chart */}
       <div className="rounded-xl border border-white/8 bg-card p-5">
         <h3 className="text-sm font-bold text-white mb-4" style={{ fontFamily: "'Syne', sans-serif" }}>
           Spending by Category
@@ -640,15 +846,7 @@ function BudgetTab() {
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
-              <Pie
-                data={BUDGET_CATEGORIES}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={90}
-                paddingAngle={3}
-                dataKey="amount"
-              >
+              <Pie data={BUDGET_CATEGORIES} cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={3} dataKey="amount">
                 {BUDGET_CATEGORIES.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
@@ -667,19 +865,14 @@ function BudgetTab() {
                   return null;
                 }}
               />
-              <Legend
-                formatter={(value) => <span style={{ color: "#94a3b8", fontSize: "12px" }}>{value}</span>}
-              />
+              <Legend formatter={(value) => <span style={{ color: "#94a3b8", fontSize: "12px" }}>{value}</span>} />
             </PieChart>
           </ResponsiveContainer>
         </div>
       </div>
 
-      {/* Essential Expenses */}
       <div className="rounded-xl border border-white/8 bg-card p-5">
-        <h3 className="text-sm font-bold text-white mb-3" style={{ fontFamily: "'Syne', sans-serif" }}>
-          Essential Expenses
-        </h3>
+        <h3 className="text-sm font-bold text-white mb-3" style={{ fontFamily: "'Syne', sans-serif" }}>Essential Expenses</h3>
         <div className="space-y-2">
           {essential.map((e) => (
             <div key={e.id} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
@@ -689,14 +882,11 @@ function BudgetTab() {
           ))}
           <div className="flex items-center justify-between pt-2">
             <span className="text-sm font-bold text-white">Subtotal</span>
-            <span className="text-sm font-mono font-bold text-rose-400">
-              {formatCurrency(essential.reduce((s, e) => s + e.amount, 0))}
-            </span>
+            <span className="text-sm font-mono font-bold text-rose-400">{formatCurrency(essential.reduce((s, e) => s + e.amount, 0))}</span>
           </div>
         </div>
       </div>
 
-      {/* Subscriptions / Non-Essential */}
       <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-5">
         <div className="flex items-center gap-2 mb-3">
           <AlertTriangle size={15} className="text-amber-400" />
@@ -710,9 +900,7 @@ function BudgetTab() {
               <div>
                 <span className="text-sm text-slate-300">{e.name}</span>
                 {(e.id === "xbox" || e.id === "capcut") && (
-                  <span className="ml-2 text-xs bg-amber-400/15 text-amber-400 px-1.5 py-0.5 rounded">
-                    Consider pausing
-                  </span>
+                  <span className="ml-2 text-xs bg-amber-400/15 text-amber-400 px-1.5 py-0.5 rounded">Consider pausing</span>
                 )}
               </div>
               <span className="text-sm font-mono font-semibold text-amber-400">{formatCurrencyDecimal(e.amount)}</span>
@@ -735,32 +923,21 @@ function SavingsTab({ state, savingsInput, setSavingsInput, handleAddSavings, sa
 }) {
   return (
     <div className="space-y-5">
-      {/* Big Savings Number */}
       <div
         className="rounded-xl border border-emerald-500/30 bg-card p-6 card-glow-emerald text-center"
         style={{ background: "linear-gradient(135deg, rgba(16,185,129,0.08) 0%, rgba(10,10,15,0.8) 100%)" }}
       >
         <p className="text-xs text-slate-400 uppercase tracking-wider mb-2">Your Savings Stack</p>
-        <div
-          className="text-6xl font-black text-emerald-400 stat-number mb-2"
-          style={{ fontFamily: "'Syne', sans-serif", letterSpacing: "-0.04em" }}
-        >
+        <div className="text-6xl font-black text-emerald-400 stat-number mb-2" style={{ fontFamily: "'Syne', sans-serif", letterSpacing: "-0.04em" }}>
           <AnimatedNumber value={state.totalSaved} prefix="$" duration={1200} />
         </div>
         <p className="text-sm text-slate-400">
           of <span className="text-white font-semibold">{formatCurrency(state.savingsGoal)}</span> goal ·{" "}
           <span className="text-emerald-400 font-semibold">{savingsProgress.toFixed(1)}% there</span>
         </p>
-
-        {/* Progress Bar */}
         <div className="h-3 bg-white/5 rounded-full overflow-hidden mt-4 mx-auto max-w-sm">
-          <div
-            className="h-full progress-emerald rounded-full transition-all duration-1000"
-            style={{ width: `${savingsProgress}%` }}
-          />
+          <div className="h-full progress-emerald rounded-full transition-all duration-1000" style={{ width: `${savingsProgress}%` }} />
         </div>
-
-        {/* Add Savings */}
         <div className="flex gap-2 mt-5 max-w-sm mx-auto">
           <div className="relative flex-1">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
@@ -782,16 +959,13 @@ function SavingsTab({ state, savingsInput, setSavingsInput, handleAddSavings, sa
         </div>
       </div>
 
-      {/* Milestones */}
       <div className="rounded-xl border border-white/8 bg-card p-5">
-        <h3 className="text-sm font-bold text-white mb-4" style={{ fontFamily: "'Syne', sans-serif" }}>
-          Savings Milestones
-        </h3>
+        <h3 className="text-sm font-bold text-white mb-4" style={{ fontFamily: "'Syne', sans-serif" }}>Savings Milestones</h3>
         <div className="space-y-3">
           {[
             { label: "Emergency Buffer", amount: 500, desc: "1 month of breathing room" },
             { label: "First $1,000", amount: 1000, desc: "The hardest milestone — and the most important" },
-            { label: "Quarter Way", amount: 2500, desc: "You're building real momentum" },
+            { label: "Quarter Way", amount: 1250, desc: "You're building real momentum" },
             { label: "Half Way", amount: 2500, desc: "Halfway to $5k" },
             { label: "Goal: $5,000", amount: 5000, desc: "Your emergency fund is fully stacked" },
             { label: "Stretch: $10,000", amount: 10000, desc: "Real financial security" },
@@ -799,27 +973,20 @@ function SavingsTab({ state, savingsInput, setSavingsInput, handleAddSavings, sa
             const reached = state.totalSaved >= m.amount;
             return (
               <div key={m.label} className={`flex items-center gap-3 py-2 border-b border-white/5 last:border-0 ${reached ? "opacity-100" : "opacity-60"}`}>
-                <div
-                  className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${
-                    reached ? "bg-emerald-500/20 text-emerald-400" : "bg-white/5 text-slate-600"
-                  }`}
-                >
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${reached ? "bg-emerald-500/20 text-emerald-400" : "bg-white/5 text-slate-600"}`}>
                   {reached ? <CheckCircle2 size={14} /> : <div className="w-2 h-2 rounded-full bg-slate-600" />}
                 </div>
                 <div className="flex-1">
                   <p className={`text-sm font-semibold ${reached ? "text-white" : "text-slate-400"}`}>{m.label}</p>
                   <p className="text-xs text-slate-500">{m.desc}</p>
                 </div>
-                <span className={`text-sm font-mono font-bold ${reached ? "text-emerald-400" : "text-slate-500"}`}>
-                  {formatCurrency(m.amount)}
-                </span>
+                <span className={`text-sm font-mono font-bold ${reached ? "text-emerald-400" : "text-slate-500"}`}>{formatCurrency(m.amount)}</span>
               </div>
             );
           })}
         </div>
       </div>
 
-      {/* Savings Projection Chart */}
       <div className="rounded-xl border border-white/8 bg-card p-5">
         <h3 className="text-sm font-bold text-white mb-4" style={{ fontFamily: "'Syne', sans-serif" }}>
           Projected Savings — May to Dec 2026 (at $650/mo)
@@ -837,15 +1004,7 @@ function SavingsTab({ state, savingsInput, setSavingsInput, handleAddSavings, sa
               <XAxis dataKey="month" tick={{ fill: "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fill: "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${v}`} />
               <Tooltip content={<CustomTooltip />} />
-              <Area
-                type="monotone"
-                dataKey="cumulative"
-                name="Savings"
-                stroke="#10b981"
-                strokeWidth={2}
-                fill="url(#savingsGrad)"
-                dot={{ fill: "#10b981", r: 3 }}
-              />
+              <Area type="monotone" dataKey="cumulative" name="Savings" stroke="#10b981" strokeWidth={2} fill="url(#savingsGrad)" dot={{ fill: "#10b981", r: 3 }} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -862,7 +1021,6 @@ function SavingsTab({ state, savingsInput, setSavingsInput, handleAddSavings, sa
 function GamePlanTab() {
   return (
     <div className="space-y-5">
-      {/* Header */}
       <div className="rounded-xl border border-white/8 bg-card p-5">
         <div className="flex items-center gap-2 mb-2">
           <BookOpen size={16} className="text-emerald-400" />
@@ -871,99 +1029,62 @@ function GamePlanTab() {
           </h3>
         </div>
         <p className="text-xs text-slate-400 leading-relaxed">
-          You're not broke — you're unorganized. You have <strong className="text-white">$1,567/mo</strong> after bills. 
-          The plan below tells every dollar where to go. Follow this and you'll have $5k saved AND two debts wiped by end of 2026.
+          You're not broke — you're unorganized. You have <strong className="text-white">$1,567/mo</strong> after bills. Follow the Avalanche method: wipe the 0% debts fast, then destroy Debt 2 (22.74% APR) which is bleeding you the most.
         </p>
       </div>
 
-      {/* The 3 Rules */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {[
           { num: "01", title: "Pay Yourself First", desc: "The moment your paycheck hits, move $325 to savings BEFORE spending anything else. Automate it.", color: "#10b981" },
-          { num: "02", title: "Snowball the Debt", desc: "Kill the smallest debts first. Each one you wipe frees up more money to attack the next.", color: "#fbbf24" },
+          { num: "02", title: "Kill the 22.74% APR", desc: "Debt 2 is your most expensive debt. After the quick kills, it gets all your firepower.", color: "#f97316" },
           { num: "03", title: "No Lifestyle Creep", desc: "When you clear a debt, roll that payment into the next one — don't spend it.", color: "#f43f5e" },
         ].map((rule) => (
-          <div
-            key={rule.num}
-            className="rounded-xl border bg-card p-4"
-            style={{ borderColor: rule.color + "33", boxShadow: `0 0 0 1px ${rule.color}15` }}
-          >
-            <div
-              className="text-3xl font-black mb-2 opacity-30"
-              style={{ fontFamily: "'Syne', sans-serif", color: rule.color }}
-            >
-              {rule.num}
-            </div>
-            <h4 className="text-sm font-bold text-white mb-1" style={{ fontFamily: "'Syne', sans-serif" }}>
-              {rule.title}
-            </h4>
+          <div key={rule.num} className="rounded-xl border bg-card p-4" style={{ borderColor: rule.color + "33" }}>
+            <div className="text-3xl font-black mb-2 opacity-30" style={{ fontFamily: "'Syne', sans-serif", color: rule.color }}>{rule.num}</div>
+            <h4 className="text-sm font-bold text-white mb-1" style={{ fontFamily: "'Syne', sans-serif" }}>{rule.title}</h4>
             <p className="text-xs text-slate-400 leading-relaxed">{rule.desc}</p>
           </div>
         ))}
       </div>
 
-      {/* Monthly Allocation Box */}
       <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-5">
-        <h3 className="text-sm font-bold text-white mb-3" style={{ fontFamily: "'Syne', sans-serif" }}>
-          Every Month, Do This
-        </h3>
+        <h3 className="text-sm font-bold text-white mb-3" style={{ fontFamily: "'Syne', sans-serif" }}>Every Month, Do This</h3>
         <div className="space-y-2">
           {[
             { label: "Payday → Savings (auto-transfer)", amount: 650, color: "#10b981", note: "Non-negotiable. Do this first." },
-            { label: "Debt Payment (current priority)", amount: 400, color: "#fbbf24", note: "Attack current target debt" },
+            { label: "Debt Payment (current priority)", amount: 500, color: "#fbbf24", note: "Attack current target debt" },
             { label: "Fixed Bills", amount: TOTAL_EXPENSES, color: "#f43f5e", note: "Car, rent, insurance, food, gas, subs" },
-            { label: "Buffer / Flex", amount: MONTHLY_LEFTOVER - 650 - 400, color: "#94a3b8", note: "Gas overages, unexpected costs" },
+            { label: "Buffer / Flex", amount: MONTHLY_LEFTOVER - 650 - 500, color: "#94a3b8", note: "Gas overages, unexpected costs" },
           ].map((row) => (
             <div key={row.label} className="flex items-start justify-between py-2 border-b border-white/5 last:border-0">
               <div>
                 <p className="text-sm text-white">{row.label}</p>
                 <p className="text-xs text-slate-500">{row.note}</p>
               </div>
-              <span className="text-sm font-mono font-bold" style={{ color: row.color }}>
-                {formatCurrency(row.amount)}
-              </span>
+              <span className="text-sm font-mono font-bold" style={{ color: row.color }}>{formatCurrency(row.amount)}</span>
             </div>
           ))}
-          <div className="flex items-center justify-between pt-2">
-            <span className="text-sm font-bold text-white">Total Allocated</span>
-            <span className="text-sm font-mono font-bold text-emerald-400">{formatCurrency(INCOME.monthly)}</span>
-          </div>
         </div>
       </div>
 
-      {/* Timeline Steps */}
       <div className="rounded-xl border border-white/8 bg-card p-5">
-        <h3 className="text-sm font-bold text-white mb-5" style={{ fontFamily: "'Syne', sans-serif" }}>
-          Month-by-Month Roadmap
-        </h3>
+        <h3 className="text-sm font-bold text-white mb-5" style={{ fontFamily: "'Syne', sans-serif" }}>Month-by-Month Roadmap</h3>
         <div className="relative">
-          {/* Vertical line */}
           <div className="absolute left-4 top-0 bottom-0 w-px bg-white/8" />
           <div className="space-y-6">
             {GAME_PLAN.map((step, i) => (
               <div key={step.step} className="flex gap-4 relative animate-fade-slide" style={{ animationDelay: `${i * 0.1}s` }}>
-                <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 z-10"
-                  style={{ background: step.color + "22", color: step.color, border: `1px solid ${step.color}44` }}
-                >
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 z-10" style={{ background: step.color + "22", color: step.color, border: `1px solid ${step.color}44` }}>
                   {step.step}
                 </div>
                 <div className="flex-1 pb-2">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-xs font-mono text-slate-500">{step.month}</span>
                     <ChevronRight size={12} className="text-slate-600" />
-                    <h4
-                      className="text-sm font-bold text-white"
-                      style={{ fontFamily: "'Syne', sans-serif", color: step.color }}
-                    >
-                      {step.title}
-                    </h4>
+                    <h4 className="text-sm font-bold" style={{ fontFamily: "'Syne', sans-serif", color: step.color }}>{step.title}</h4>
                   </div>
                   <p className="text-xs text-slate-400 mb-2">{step.description}</p>
-                  <div
-                    className="text-xs rounded-lg px-3 py-2"
-                    style={{ background: step.color + "12", color: step.color, border: `1px solid ${step.color}22` }}
-                  >
+                  <div className="text-xs rounded-lg px-3 py-2" style={{ background: step.color + "12", color: step.color, border: `1px solid ${step.color}22` }}>
                     <strong>Action:</strong> {step.action}
                   </div>
                 </div>
@@ -973,11 +1094,8 @@ function GamePlanTab() {
         </div>
       </div>
 
-      {/* Mindset Section */}
       <div className="rounded-xl border border-white/8 bg-card p-5">
-        <h3 className="text-sm font-bold text-white mb-3" style={{ fontFamily: "'Syne', sans-serif" }}>
-          The Mindset Shift
-        </h3>
+        <h3 className="text-sm font-bold text-white mb-3" style={{ fontFamily: "'Syne', sans-serif" }}>The Mindset Shift</h3>
         <div className="space-y-3">
           {[
             { from: "\"I never have enough\"", to: "\"I have $1,567 left every month — I just need to direct it\"" },
@@ -998,4 +1116,12 @@ function GamePlanTab() {
       </div>
     </div>
   );
+}
+
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+
+function getDebtFreeDate(months: number): string {
+  const start = new Date(2026, 4, 1); // May 2026
+  start.setMonth(start.getMonth() + months);
+  return start.toLocaleDateString("en-US", { month: "short", year: "numeric" });
 }
