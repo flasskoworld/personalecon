@@ -4,6 +4,8 @@
 
 import { useState, useMemo } from "react";
 import { DebtEditModal } from "@/components/DebtEditModal";
+import { LiveDateBar } from "@/components/LiveDateBar";
+import { useLiveClock } from "@/hooks/useLiveClock";
 import type { Debt } from "@/lib/financialData";
 import { AnimatedNumber } from "@/components/AnimatedNumber";
 import { useFinancialStore } from "@/hooks/useFinancialStore";
@@ -74,6 +76,7 @@ export default function Home() {
   const [savingsInput, setSavingsInput] = useState("");
   const [showReset, setShowReset] = useState(false);
   const [editingDebt, setEditingDebt] = useState<Debt | null>(null);
+  const clock = useLiveClock();
 
   const {
     state,
@@ -168,7 +171,11 @@ export default function Home() {
               </h1>
               <p className="text-slate-400 mt-1 text-sm">
                 Your personalized path from drowning to stacking. Next payday:{" "}
-                <span className="text-emerald-400 font-semibold">{INCOME.nextPayday}</span>
+                <span className={clock.payday.isToday ? "text-emerald-400 font-bold animate-pulse" : "text-emerald-400 font-semibold"}>
+                  {clock.payday.isToday
+                    ? "TODAY 💸"
+                    : clock.payday.nextPayday.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+                </span>
               </p>
             </div>
             <div className="flex flex-col items-end gap-1">
@@ -242,6 +249,9 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* LIVE DATE BAR */}
+      <LiveDateBar />
 
       {/* TABS */}
       <div className="max-w-6xl mx-auto px-6">
