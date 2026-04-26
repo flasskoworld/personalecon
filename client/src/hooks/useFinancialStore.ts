@@ -20,7 +20,7 @@ export interface FinancialState {
   lastUpdated: string;
 }
 
-const STORAGE_KEY = "hustle-board-v2";
+const STORAGE_KEY = "personal-economy-v2";
 
 const DEFAULT_STATE: FinancialState = {
   debts: DEBTS_INITIAL,

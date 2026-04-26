@@ -164,10 +164,16 @@ export default function Home() {
                 </span>
               </div>
               <h1
-                className="text-4xl md:text-5xl font-black text-white leading-tight"
+                className="text-4xl md:text-5xl font-black text-white leading-tight flex items-center gap-3"
                 style={{ fontFamily: "'Syne', sans-serif", letterSpacing: "-0.03em" }}
               >
-                Hustle Board
+                <span
+                  className="inline-flex items-center justify-center w-12 h-12 rounded-xl text-2xl font-black shrink-0"
+                  style={{ background: "linear-gradient(135deg, #10b981 0%, #059669 100%)", color: "#fff", boxShadow: "0 4px 16px rgba(16,185,129,0.35)" }}
+                >
+                  £
+                </span>
+                Personal Economy
               </h1>
               <p className="text-slate-400 mt-1 text-sm">
                 Your personalized path from drowning to stacking. Next payday:{" "}
