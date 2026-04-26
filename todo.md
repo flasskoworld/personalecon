@@ -37,3 +37,7 @@
 - [ ] Monthly check-in log with notes
 - [ ] Income update field for raises/new jobs
 - [ ] Multi-currency support in Pro
+
+## Footer Branding
+- [x] Upload StreetEconomics logo to static assets
+- [x] Add "Powered By: StreetEconomics" footer with logo and link to PELanding, PEDashboard, PEOnboarding, PEPricing

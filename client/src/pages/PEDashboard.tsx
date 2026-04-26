@@ -3,6 +3,7 @@
 // Design: Dark Premium Fintech | Syne + Inter | Emerald/Gold/Indigo accents
 
 import { useState, useEffect, useRef } from "react";
+import { PoweredByFooter } from "@/components/PoweredByFooter";
 import { useLocation } from "wouter";
 import { useStore } from "@/hooks/usePEStore";
 import {
@@ -906,6 +907,9 @@ export default function Dashboard() {
           onClose={() => setEditingInvest(null)}
         />
       )}
+
+      {/* POWERED BY FOOTER */}
+      <PoweredByFooter />
 
       {/* RESET CONFIRM */}
       {showReset && (

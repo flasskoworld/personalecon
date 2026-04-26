@@ -2,6 +2,7 @@
 // Free tier + Pro tier with Stripe checkout
 
 import { useState } from "react";
+import { PoweredByFooter } from "@/components/PoweredByFooter";
 import { useLocation } from "wouter";
 import { CheckCircle2, ArrowRight, Zap, Shield, TrendingUp, BarChart3, Target, Star, Lock } from "lucide-react";
 import { trpc } from "@/lib/trpc";
@@ -292,6 +293,7 @@ export default function PEPricing() {
           </button>
         </div>
       </div>
+      <PoweredByFooter />
     </div>
   );
 }

@@ -3,6 +3,7 @@
 // Design: Dark Premium Fintech | Syne + Inter
 
 import { useState } from "react";
+import { PoweredByFooter } from "@/components/PoweredByFooter";
 import { useLocation } from "wouter";
 import { useStore } from "@/hooks/usePEStore";
 import {
@@ -643,6 +644,7 @@ export default function Onboarding() {
 
         </div>
       </div>
+      <PoweredByFooter />
     </div>
   );
 }

@@ -3,6 +3,7 @@
 // Asymmetric layout, editorial typography, strong CTA
 
 import { useLocation } from "wouter";
+import { PoweredByFooter } from "@/components/PoweredByFooter";
 import { ArrowRight, TrendingUp, Shield, Target, BarChart3, Zap, CheckCircle2, ChevronRight } from "lucide-react";
 import { useStore } from "@/hooks/usePEStore";
 
@@ -337,7 +338,7 @@ export default function Landing() {
           <p className="text-xs text-slate-600">All data is stored locally on your device. Nothing is sent to any server.</p>
         </div>
       </footer>
-
+      <PoweredByFooter />
     </div>
   );
 }
