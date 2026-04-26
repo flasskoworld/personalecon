@@ -95,6 +95,19 @@ export function useFinancialStore() {
     setState((prev) => ({ ...prev, strategy }));
   }, []);
 
+  const updateDebt = useCallback(
+    (debtId: string, fields: Partial<Pick<Debt, "balance" | "paid" | "apr" | "minPayment" | "name">>) => {
+      setState((prev) => ({
+        ...prev,
+        lastUpdated: new Date().toISOString(),
+        debts: prev.debts.map((d) =>
+          d.id === debtId ? { ...d, ...fields } : d
+        ),
+      }));
+    },
+    []
+  );
+
   const resetAll = useCallback(() => {
     setState(DEFAULT_STATE);
   }, []);
@@ -112,6 +125,7 @@ export function useFinancialStore() {
     addMonthlyLog,
     updateSavingsGoal,
     setStrategy,
+    updateDebt,
     resetAll,
     totalDebt,
     totalPaid,

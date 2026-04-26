@@ -3,6 +3,8 @@
 // Sections: Overview KPIs, Debt Tracker (with APR + strategy toggle), Budget, Savings, Game Plan
 
 import { useState, useMemo } from "react";
+import { DebtEditModal } from "@/components/DebtEditModal";
+import type { Debt } from "@/lib/financialData";
 import { AnimatedNumber } from "@/components/AnimatedNumber";
 import { useFinancialStore } from "@/hooks/useFinancialStore";
 import {
@@ -71,12 +73,14 @@ export default function Home() {
   const [paymentInputs, setPaymentInputs] = useState<Record<string, string>>({});
   const [savingsInput, setSavingsInput] = useState("");
   const [showReset, setShowReset] = useState(false);
+  const [editingDebt, setEditingDebt] = useState<Debt | null>(null);
 
   const {
     state,
     makePayment,
     addSavings,
     setStrategy,
+    updateDebt,
     resetAll,
     totalDebt,
     totalPaid,
@@ -284,6 +288,7 @@ export default function Home() {
               setStrategy={setStrategy}
               snowballSim={snowballSim}
               avalancheSim={avalancheSim}
+              onEditDebt={setEditingDebt}
             />
           )}
           {activeTab === "budget" && <BudgetTab />}
@@ -299,6 +304,13 @@ export default function Home() {
           {activeTab === "plan" && <GamePlanTab />}
         </div>
       </div>
+
+      {/* Debt Edit Modal */}
+      <DebtEditModal
+        debt={editingDebt}
+        onClose={() => setEditingDebt(null)}
+        onSave={(id, fields) => updateDebt(id, fields)}
+      />
 
       {/* Reset */}
       <div className="max-w-6xl mx-auto px-6 pb-8 flex justify-end">
@@ -530,7 +542,7 @@ function OverviewTab({
 function DebtsTab({
   state, sortedDebts, paymentInputs, setPaymentInputs, handlePayment,
   totalDebt, totalPaid, debtProgress, currentMonthlyInterest,
-  setStrategy, snowballSim, avalancheSim,
+  setStrategy, snowballSim, avalancheSim, onEditDebt,
 }: {
   state: ReturnType<typeof useFinancialStore>["state"];
   sortedDebts: ReturnType<typeof sortDebtsByStrategy>;
@@ -544,6 +556,7 @@ function DebtsTab({
   setStrategy: (s: DebtStrategy) => void;
   snowballSim: ReturnType<typeof simulatePayoff>;
   avalancheSim: ReturnType<typeof simulatePayoff>;
+  onEditDebt: (debt: Debt) => void;
 }) {
   const interestBarData = state.debts
     .filter((d) => d.apr > 0)
@@ -749,29 +762,38 @@ function DebtsTab({
                 <span className="text-xs text-slate-500">{formatCurrency(debt.balance)} left</span>
               </div>
 
-              {/* Payment Input */}
-              {!isPaidOff && (
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
-                    <input
-                      type="number"
-                      placeholder="Payment amount"
-                      value={paymentInputs[debt.id] || ""}
-                      onChange={(e) => setPaymentInputs((p) => ({ ...p, [debt.id]: e.target.value }))}
-                      className="w-full bg-white/5 border border-white/10 rounded-lg pl-7 pr-3 py-2 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30"
-                      onKeyDown={(e) => e.key === "Enter" && handlePayment(debt.id)}
-                    />
-                  </div>
-                  <button
-                    onClick={() => handlePayment(debt.id)}
-                    className="px-4 py-2 rounded-lg text-sm font-semibold text-black transition-all hover:opacity-90 active:scale-95"
-                    style={{ background: debt.color }}
-                  >
-                    Log Payment
-                  </button>
-                </div>
-              )}
+              {/* Payment Input + Edit */}
+              <div className="flex gap-2 flex-wrap">
+                {!isPaidOff && (
+                  <>
+                    <div className="relative flex-1 min-w-[140px]">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
+                      <input
+                        type="number"
+                        placeholder="Payment amount"
+                        value={paymentInputs[debt.id] || ""}
+                        onChange={(e) => setPaymentInputs((p) => ({ ...p, [debt.id]: e.target.value }))}
+                        className="w-full bg-white/5 border border-white/10 rounded-lg pl-7 pr-3 py-2 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30"
+                        onKeyDown={(e) => e.key === "Enter" && handlePayment(debt.id)}
+                      />
+                    </div>
+                    <button
+                      onClick={() => handlePayment(debt.id)}
+                      className="px-4 py-2 rounded-lg text-sm font-semibold text-black transition-all hover:opacity-90 active:scale-95"
+                      style={{ background: debt.color }}
+                    >
+                      Log Payment
+                    </button>
+                  </>
+                )}
+                <button
+                  onClick={() => onEditDebt(debt)}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white border border-white/10 hover:border-white/20 transition-all"
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  Edit
+                </button>
+              </div>
             </div>
           );
         })}
