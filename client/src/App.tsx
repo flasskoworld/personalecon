@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
-import { Route, Switch } from "wouter";
+import { Route, Switch, Redirect } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
@@ -11,10 +11,11 @@ import PEDashboard from "./pages/PEDashboard";
 import PEPricing from "./pages/PEPricing";
 
 function Router() {
-  // make sure to consider if you need authentication for certain routes
   return (
     <Switch>
-      <Route path={"/"} component={Home} />
+      {/* Root redirects to the product landing page */}
+      <Route path={"/"} component={() => <Redirect to="/pro" />} />
+      <Route path={"/personal"} component={Home} />
       <Route path={"/pro"} component={PELanding} />
       <Route path={"/pro/pricing"} component={PEPricing} />
       <Route path={"/pro/onboarding"} component={PEOnboarding} />

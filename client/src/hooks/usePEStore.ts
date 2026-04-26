@@ -63,7 +63,11 @@ export function useStore() {
   }, []);
 
   const loadDemo = useCallback(() => {
-    setState({ ...DEMO_STATE, lastUpdated: new Date().toISOString() });
+    const demoState = { ...DEMO_STATE, lastUpdated: new Date().toISOString() };
+    // Write directly to localStorage FIRST so the dashboard reads fresh demo data
+    // even if navigation happens before the async useEffect fires
+    saveState(demoState);
+    setState(demoState);
   }, []);
 
   const resetAll = useCallback(() => {
