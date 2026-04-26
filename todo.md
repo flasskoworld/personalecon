@@ -41,3 +41,16 @@
 ## Footer Branding
 - [x] Upload StreetEconomics logo to static assets
 - [x] Add "Powered By: StreetEconomics" footer with logo and link to PELanding, PEDashboard, PEOnboarding, PEPricing
+
+## Paywall / Free vs. Pro Feature Gating
+- [ ] Create useProStatus hook (reads isPro from localStorage after Stripe payment)
+- [ ] Create ProGate component (lock overlay with upgrade CTA)
+- [ ] Gate Avalanche strategy toggle + comparison behind Pro
+- [ ] Gate Game Plan tab behind Pro (show lock on tab)
+- [ ] Gate Investment Portfolio tab behind Pro
+- [ ] Gate Debt edit modal behind Pro
+- [ ] Gate payment logging (Log Payment button) behind Pro
+- [ ] Gate Projected debt-free date behind Pro
+- [ ] Gate Monthly cash flow breakdown behind Pro
+- [ ] Wire upgrade CTA to /pro/pricing Stripe checkout
+- [ ] Show "Free Plan" vs "Pro" badge in dashboard header
