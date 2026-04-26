@@ -1,4 +1,4 @@
-const SE_LOGO_URL = "/manus-storage/SEtypelogo_white_151cb3b4.webp";
+const SE_LOGO_URL = "/manus-storage/SE_globe_logo_white_d3acc63a.png";
 const SE_LINK = "https://beacons.ai/streetecon";
 
 export function PoweredByFooter() {
