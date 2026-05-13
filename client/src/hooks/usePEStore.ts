@@ -47,7 +47,7 @@ export function useStore() {
     investments: Investment[],
     totalSaved: number
   ) => {
-    setState({
+    const newState: AppState = {
       profile,
       expenses,
       debts,
@@ -59,7 +59,11 @@ export function useStore() {
       setupComplete: true,
       isDemo: false,
       lastUpdated: new Date().toISOString(),
-    });
+    };
+    // Save synchronously FIRST so the dashboard reads fresh data
+    // even if navigation fires before the useEffect persistence runs
+    saveState(newState);
+    setState(newState);
   }, []);
 
   const loadDemo = useCallback(() => {
