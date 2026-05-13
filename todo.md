@@ -55,6 +55,12 @@
 - [x] Wire upgrade CTA to /pro/pricing Stripe checkout
 - [x] Show "Free Plan" vs "Pro" badge in dashboard header
 
+## Demo Mode Paywall Bypass
+- [x] In demo mode, bypass all Pro gates so all features are fully previewable
+- [x] In personal plan mode (non-demo), keep Pro locks and upgrade prompts
+- [x] Update tab click handlers to check isDemo flag
+- [x] Update ProBadge on tabs to not show in demo mode
+
 ## Mobile Optimization
 - [ ] Fix PELanding mobile layout (hero text overflow, feature cards, stats grid, footer)
 - [ ] Fix PEDashboard mobile layout (header nav, tabs overflow, KPI grid, debt cards, charts, payment inputs)

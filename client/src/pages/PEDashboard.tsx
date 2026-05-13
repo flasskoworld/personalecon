@@ -196,6 +196,7 @@ export default function Dashboard() {
   const [, navigate] = useLocation();
   const { state, computed, makePayment, updateDebt, addSavings, updateInvestment, addInvestment, removeInvestment, setStrategy, resetAll } = useStore();
   const { isPro } = useProStatus();
+  const effectivelyPro = isPro || state.isDemo; // Demo mode unlocks all Pro features for preview
   const [activeTab, setActiveTab] = useState<"overview" | "debt" | "budget" | "savings" | "plan">("overview");
   const [editingDebt, setEditingDebt] = useState<Debt | null>(null);
   const [editingInvest, setEditingInvest] = useState<Investment | null>(null);
@@ -241,8 +242,10 @@ export default function Dashboard() {
             <div className="w-7 h-7 rounded-md flex items-center justify-center text-sm font-black" style={{ background: "linear-gradient(135deg, #10b981, #059669)", color: "#fff" }}>£</div>
             <span className="text-sm font-bold hidden xs:inline sm:inline" style={{ fontFamily: "'Syne', sans-serif" }}>Personal Economy</span>
             {state.isDemo && <span className="text-xs bg-amber-500/15 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full font-mono">DEMO</span>}
-            {isPro ? (
+            {effectivelyPro && !state.isDemo ? (
               <span className="text-xs bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-mono">PRO ✓</span>
+            ) : state.isDemo ? (
+              <span className="text-xs bg-indigo-500/15 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded-full font-mono">DEMO PREVIEW</span>
             ) : (
               <button onClick={() => navigate("/pro/pricing")} className="text-xs bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full font-mono hover:bg-amber-500/20 transition-all">FREE → Upgrade</button>
             )}
@@ -314,7 +317,7 @@ export default function Dashboard() {
               <button
                 key={t.id}
                 onClick={() => {
-                  if (t.isPro && !isPro) { navigate("/pro/pricing"); return; }
+                  if (t.isPro && !effectivelyPro) { navigate("/pro/pricing"); return; }
                   setActiveTab(t.id as typeof activeTab);
                 }}
                 className={`flex items-center justify-center gap-1 sm:gap-1.5 px-3 sm:px-4 py-3 sm:py-3.5 text-xs sm:text-sm font-medium whitespace-nowrap border-b-2 transition-all min-w-[44px] sm:min-w-0 ${
@@ -325,7 +328,7 @@ export default function Dashboard() {
               >
                 <span className="flex-shrink-0">{t.icon}</span>
                 <span className="hidden sm:inline">{t.label}</span>
-                {t.isPro && !isPro && <ProBadge />}
+                {t.isPro && !effectivelyPro && <ProBadge />}
               </button>
             ))}
           </div>
@@ -456,7 +459,7 @@ export default function Dashboard() {
                     {(["snowball", "avalanche"] as const).map((s) => (
                       <button
                         key={s}
-                        onClick={() => { if (s === "avalanche" && !isPro) { navigate("/pro/pricing"); return; } setStrategy(s); }}
+                        onClick={() => { if (s === "avalanche" && !effectivelyPro) { navigate("/pro/pricing"); return; } setStrategy(s); }}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
                           state.strategy === s
                             ? s === "avalanche" ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-400" : "bg-indigo-500/15 border-indigo-500/40 text-indigo-400"
@@ -465,7 +468,7 @@ export default function Dashboard() {
                       >
                         {s === "avalanche" ? <Flame size={12} /> : <Snowflake size={12} />}
                         {s === "avalanche" ? "Avalanche 🔥" : "Snowball ❄️"}
-                        {s === "avalanche" && !isPro && <ProBadge />}
+                        {s === "avalanche" && !effectivelyPro && <ProBadge />}
                       </button>
                     ))}
                   </div>
@@ -520,12 +523,12 @@ export default function Dashboard() {
                             {isTarget && !isPaidOff && <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: debt.color + "20", color: debt.color }}>TARGET</span>}
                             {isPaidOff && <span className="text-xs font-bold text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded-full">PAID OFF ✓</span>}
                             <button
-                              onClick={() => { if (!isPro) { navigate("/pro/pricing"); return; } setEditingDebt(debt); }}
+                              onClick={() => { if (!effectivelyPro) { navigate("/pro/pricing"); return; } setEditingDebt(debt); }}
                               className="text-slate-500 hover:text-white p-1.5 rounded-lg hover:bg-white/5 transition-all"
-                              title={isPro ? "Edit debt" : "Upgrade to Pro to edit debts"}
+                              title={effectivelyPro ? "Edit debt" : "Upgrade to Pro to edit debts"}
                             >
                               <Edit3 size={13} />
-                              {!isPro && <span className="sr-only">Pro</span>}
+                              {!effectivelyPro && <span className="sr-only">Pro</span>}
                             </button>
                           </div>
                         </div>
@@ -561,7 +564,7 @@ export default function Dashboard() {
                                 onChange={(e) => setPayAmount((p) => ({ ...p, [debt.id]: e.target.value }))}
                               />
                             </div>
-                            {isPro ? (
+                            {effectivelyPro ? (
                               <button
                                 onClick={() => {
                                   const amt = Number(payAmount[debt.id]);
@@ -668,7 +671,7 @@ export default function Dashboard() {
 
         {/* ── SAVINGS & INVESTMENTS TAB ─────────────────────────────────────── */}
         {activeTab === "savings" && (
-          <ProGate isPro={isPro} featureName="Savings & Investment Portfolio" description="Track savings milestones, investment accounts, ETFs, crypto, and retirement funds. See your total portfolio gain/loss and monthly contributions.">
+          <ProGate isPro={effectivelyPro} featureName="Savings & Investment Portfolio" description="Track savings milestones, investment accounts, ETFs, crypto, and retirement funds. See your total portfolio gain/loss and monthly contributions.">
           <div className="space-y-6">
             {/* Savings section */}
             <div className={card}>
@@ -836,7 +839,7 @@ export default function Dashboard() {
 
         {/* ── GAME PLAN TAB ─────────────────────────────────────────────────── */}
         {activeTab === "plan" && (
-          <ProGate isPro={isPro} featureName="Game Plan — Your Month-by-Month Roadmap" description="Get a personalized, step-by-step action plan: when to attack each debt, how to allocate every dollar, and exactly when you'll be debt-free.">
+          <ProGate isPro={effectivelyPro} featureName="Game Plan — Your Month-by-Month Roadmap" description="Get a personalized, step-by-step action plan: when to attack each debt, how to allocate every dollar, and exactly when you'll be debt-free.">
           <div className="space-y-6">
             {/* The 3 Rules */}
             <div className={card}>
