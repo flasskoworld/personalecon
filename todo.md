@@ -55,6 +55,11 @@
 - [x] Wire upgrade CTA to /pro/pricing Stripe checkout
 - [x] Show "Free Plan" vs "Pro" badge in dashboard header
 
+## Demo Mode — Start Your Own Plan CTA
+- [x] Add persistent sticky banner/button in demo dashboard to navigate to onboarding
+- [x] Banner should only show in demo mode (state.isDemo)
+- [x] Clicking navigates to /pro/onboarding and resets demo state
+
 ## Demo Mode Paywall Bypass
 - [x] In demo mode, bypass all Pro gates so all features are fully previewable
 - [x] In personal plan mode (non-demo), keep Pro locks and upgrade prompts

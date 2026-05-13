@@ -276,6 +276,29 @@ export default function Dashboard() {
         </div>
       </header>
 
+      {/* DEMO CTA BANNER — only visible in demo mode */}
+      {state.isDemo && (
+        <div className="sticky top-14 z-20 border-b border-emerald-500/20" style={{ background: "linear-gradient(90deg, rgba(16,185,129,0.12) 0%, rgba(99,102,241,0.10) 100%)", backdropFilter: "blur(8px)" }}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-emerald-400 text-sm shrink-0">👀</span>
+              <p className="text-xs sm:text-sm text-slate-300 truncate">
+                <span className="font-semibold text-white">You're previewing a demo.</span>
+                <span className="hidden sm:inline text-slate-400"> This is Jordan Rivers's sample plan — not your real data.</span>
+              </p>
+            </div>
+            <button
+              onClick={() => { resetAll(); navigate("/pro/onboarding"); }}
+              className="shrink-0 flex items-center gap-1.5 text-xs sm:text-sm font-bold px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-all"
+              style={{ background: "linear-gradient(135deg, #10b981, #059669)", color: "#fff", boxShadow: "0 2px 12px rgba(16,185,129,0.35)" }}
+            >
+              <span>Start Your Own Plan</span>
+              <span>→</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* HERO STRIP */}
       <div className="border-b border-white/6 py-5" style={{ background: "linear-gradient(135deg, rgba(16,185,129,0.05), rgba(99,102,241,0.03))" }}>
         <div className="max-w-7xl mx-auto px-6">
