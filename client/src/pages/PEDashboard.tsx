@@ -309,7 +309,7 @@ export default function Dashboard() {
       {/* TABS */}
       <div className="border-b border-white/6 sticky top-14 z-30" style={{ background: "rgba(8,10,15,0.95)", backdropFilter: "blur(12px)" }}>
         <div className="max-w-7xl mx-auto px-6">
-          <div className="flex gap-1 overflow-x-auto">
+          <div className="flex overflow-x-auto scrollbar-hide">
             {TABS.map((t) => (
               <button
                 key={t.id}
@@ -317,13 +317,15 @@ export default function Dashboard() {
                   if (t.isPro && !isPro) { navigate("/pro/pricing"); return; }
                   setActiveTab(t.id as typeof activeTab);
                 }}
-                className={`flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-4 py-3 sm:py-3.5 text-xs sm:text-sm font-medium whitespace-nowrap border-b-2 transition-all ${
+                className={`flex items-center justify-center gap-1 sm:gap-1.5 px-3 sm:px-4 py-3 sm:py-3.5 text-xs sm:text-sm font-medium whitespace-nowrap border-b-2 transition-all min-w-[44px] sm:min-w-0 ${
                   activeTab === t.id
                     ? "border-emerald-500 text-white"
                     : "border-transparent text-slate-500 hover:text-slate-300"
                 }`}
               >
-                {t.icon}{t.label}{t.isPro && !isPro && <ProBadge />}
+                <span className="flex-shrink-0">{t.icon}</span>
+                <span className="hidden sm:inline">{t.label}</span>
+                {t.isPro && !isPro && <ProBadge />}
               </button>
             ))}
           </div>
@@ -448,24 +450,26 @@ export default function Dashboard() {
             ) : (
               <>
                 {/* Strategy toggle */}
-                <div className="flex items-center gap-3">
-                  <span className="text-xs text-slate-500">Strategy:</span>
-                  {(["snowball", "avalanche"] as const).map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => { if (s === "avalanche" && !isPro) { navigate("/pro/pricing"); return; } setStrategy(s); }}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
-                        state.strategy === s
-                          ? s === "avalanche" ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-400" : "bg-indigo-500/15 border-indigo-500/40 text-indigo-400"
-                          : "border-white/10 text-slate-500 hover:border-white/20"
-                      }`}
-                    >
-                      {s === "avalanche" ? <Flame size={12} /> : <Snowflake size={12} />}
-                      {s === "avalanche" ? "Avalanche 🔥" : "Snowball ❄️"}
-                      {s === "avalanche" && !isPro && <ProBadge />}
-                    </button>
-                  ))}
-                  <span className="text-xs text-slate-600 ml-2">Debt-free by: <span className="text-white">{getDebtFreeDate(currentSim.months)}</span></span>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs text-slate-500">Strategy:</span>
+                    {(["snowball", "avalanche"] as const).map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => { if (s === "avalanche" && !isPro) { navigate("/pro/pricing"); return; } setStrategy(s); }}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                          state.strategy === s
+                            ? s === "avalanche" ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-400" : "bg-indigo-500/15 border-indigo-500/40 text-indigo-400"
+                            : "border-white/10 text-slate-500 hover:border-white/20"
+                        }`}
+                      >
+                        {s === "avalanche" ? <Flame size={12} /> : <Snowflake size={12} />}
+                        {s === "avalanche" ? "Avalanche 🔥" : "Snowball ❄️"}
+                        {s === "avalanche" && !isPro && <ProBadge />}
+                      </button>
+                    ))}
+                  </div>
+                  <span className="text-xs text-slate-600">Debt-free by: <span className="text-white">{getDebtFreeDate(currentSim.months)}</span></span>
                 </div>
 
                 {/* Interest bleed bar */}
