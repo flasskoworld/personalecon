@@ -9,24 +9,24 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 
 const FREE_FEATURES = [
-  "Full debt tracker (up to 3 debts)",
-  "Budget breakdown & pie chart",
-  "Savings goal tracker",
-  "Snowball vs. Avalanche toggle",
+  "Track up to 3 debts (view balances & interest)",
+  "Savings goal tracker & portfolio overview",
+  "Budget breakdown & spending pie chart",
+  "Snowball debt strategy",
   "Live payday countdown",
-  "Monthly game plan",
-  "Data stored locally on your device",
+  "Income management (primary + extra sources)",
+  "Data stored locally — never sent to a server",
 ];
 
 const PRO_FEATURES = [
   "Everything in Free",
-  "Unlimited debts",
-  "Investment portfolio tracker",
-  "PDF export of your full plan",
-  "Advanced payoff simulations",
+  "Unlimited debts tracked",
+  "Log payments & edit debts",
+  "Avalanche strategy + projected debt-free date",
+  "Month-by-month Game Plan roadmap",
+  "Monthly cash flow breakdown",
   "Multi-currency support",
-  "Priority support",
-  "Early access to new features",
+  "Priority support & early access to new features",
 ];
 
 export default function PEPricing() {

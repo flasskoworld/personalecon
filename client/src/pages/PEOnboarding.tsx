@@ -451,12 +451,29 @@ export default function Onboarding() {
                       </div>
                     ))}
                   </div>
-                  <button
-                    onClick={addDebt}
-                    className="flex items-center gap-2 text-sm text-emerald-400 hover:text-emerald-300 border border-emerald-500/20 hover:border-emerald-500/40 rounded-lg px-4 py-2.5 w-full justify-center transition-all"
-                  >
-                    <Plus size={14} /> Add Another Debt
-                  </button>
+                  {debts.length < 3 ? (
+                    <button
+                      onClick={addDebt}
+                      className="flex items-center gap-2 text-sm text-emerald-400 hover:text-emerald-300 border border-emerald-500/20 hover:border-emerald-500/40 rounded-lg px-4 py-2.5 w-full justify-center transition-all"
+                    >
+                      <Plus size={14} /> Add Another Debt
+                    </button>
+                  ) : (
+                    <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 flex items-center justify-between gap-3">
+                      <div>
+                        <div className="text-xs font-bold text-amber-400 mb-0.5">Free plan limit reached (3 debts)</div>
+                        <div className="text-xs text-slate-400">Upgrade to Pro to track unlimited debts.</div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => window.open(window.location.origin + "/pro/pricing", "_self")}
+                        className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold text-black whitespace-nowrap"
+                        style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)" }}
+                      >
+                        Unlock Pro
+                      </button>
+                    </div>
+                  )}
                   {debts.length > 0 && (
                     <div className="mt-4 rounded-xl border border-white/8 bg-white/3 p-4 flex justify-between items-center">
                       <span className="text-sm text-slate-400">Total Debt</span>

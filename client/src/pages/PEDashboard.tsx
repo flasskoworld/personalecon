@@ -235,7 +235,7 @@ export default function Dashboard() {
     { id: "overview", label: "Overview", icon: <BarChart3 size={15} /> },
     { id: "debt", label: "Debt Tracker", icon: <Shield size={15} /> },
     { id: "budget", label: "Budget", icon: <Layers size={15} /> },
-    { id: "savings", label: "Savings & Investments", icon: <TrendingUp size={15} />, isPro: true },
+    { id: "savings", label: "Savings & Investments", icon: <TrendingUp size={15} /> },
     { id: "plan", label: "Game Plan", icon: <Target size={15} />, isPro: true },
   ];
 
@@ -648,15 +648,33 @@ export default function Dashboard() {
                 {/* Debt cards */}
                 <div className="space-y-4">
                   {sortedDebts.map((debt, idx) => {
+                    // Free users can see up to 3 debts but actions are locked
+                    const isLocked = !effectivelyPro && idx >= 3;
                     const progress = debt.originalBalance > 0 ? Math.min(100, (debt.paid / (debt.originalBalance)) * 100) : 0;
                     const isPaidOff = debt.balance <= 0;
                     const isTarget = idx === 0 && !isPaidOff;
                     return (
                       <div
                         key={debt.id}
-                        className={`rounded-2xl border p-5 transition-all ${isTarget ? "border-opacity-40" : "border-white/8"} ${isPaidOff ? "opacity-50" : ""}`}
+                        className={`rounded-2xl border p-5 transition-all relative ${isTarget ? "border-opacity-40" : "border-white/8"} ${isPaidOff ? "opacity-50" : ""} ${isLocked ? "overflow-hidden" : ""}`}
                         style={{ borderColor: isTarget ? debt.color : undefined, background: isTarget ? debt.color + "08" : "rgba(255,255,255,0.02)" }}
                       >
+                        {/* Locked overlay for free users beyond 3 debts */}
+                        {isLocked && (
+                          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 rounded-2xl" style={{ background: "rgba(8,10,15,0.82)", backdropFilter: "blur(4px)" }}>
+                            <div className="text-center">
+                              <div className="text-sm font-bold text-amber-400 mb-1">Pro feature</div>
+                              <div className="text-xs text-slate-400">Upgrade to track unlimited debts</div>
+                            </div>
+                            <button
+                              onClick={() => navigate("/pro/pricing")}
+                              className="px-4 py-1.5 rounded-lg text-xs font-bold text-black"
+                              style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)" }}
+                            >
+                              Unlock Pro
+                            </button>
+                          </div>
+                        )}
                         <div className="flex items-start justify-between mb-3 gap-2">
                           <div className="flex items-center gap-2.5">
                             <div className="w-3 h-3 rounded-full shrink-0" style={{ background: debt.color }} />
@@ -739,12 +757,27 @@ export default function Dashboard() {
                       </div>
                     );
                   })}
-                </div>
+                 </div>
+                {/* 3-debt limit upsell for free users */}
+                {!effectivelyPro && sortedDebts.length >= 3 && (
+                  <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-5 flex items-center justify-between gap-4">
+                    <div>
+                      <div className="text-sm font-bold text-amber-400 mb-1">You've reached the free limit (3 debts)</div>
+                      <div className="text-xs text-slate-400">Upgrade to Pro to track unlimited debts, log payments, and get your debt-free date.</div>
+                    </div>
+                    <button
+                      onClick={() => navigate("/pro/pricing")}
+                      className="shrink-0 px-4 py-2 rounded-lg text-xs font-bold text-black transition-all hover:opacity-90 whitespace-nowrap"
+                      style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)" }}
+                    >
+                      Unlock Pro
+                    </button>
+                  </div>
+                )}
               </>
             )}
           </div>
         )}
-
         {/* ── BUDGET TAB ───────────────────────────────────────────────────── */}
         {activeTab === "budget" && (
           <div className="space-y-6">
@@ -819,7 +852,6 @@ export default function Dashboard() {
 
         {/* ── SAVINGS & INVESTMENTS TAB ─────────────────────────────────────── */}
         {activeTab === "savings" && (
-          <ProGate isPro={effectivelyPro} featureName="Savings & Investment Portfolio" description="Track savings milestones, investment accounts, ETFs, crypto, and retirement funds. See your total portfolio gain/loss and monthly contributions.">
           <div className="space-y-6">
             {/* Savings section */}
             <div className={card}>
@@ -981,7 +1013,6 @@ export default function Dashboard() {
               )}
             </div>
           </div>
-          </ProGate>
         )}
 
         {/* ── GAME PLAN TAB ─────────────────────────────────────────────────── */}

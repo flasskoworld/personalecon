@@ -35,7 +35,7 @@
 - [ ] PDF export of full financial plan
 - [ ] Payday banner/modal reminder on payday
 - [ ] Monthly check-in log with notes
-- [ ] Income update field for raises/new jobs
+- [x] Income update field for raises/new jobs (implemented as full income management section in Overview tab)
 - [ ] Multi-currency support in Pro
 
 ## Footer Branding
@@ -98,3 +98,20 @@
 - [x] Add addAdditionalIncome / removeAdditionalIncome actions to store
 - [x] Build Income section in dashboard Overview tab (edit primary + add/remove extra sources)
 - [x] Show total combined income in KPI strip (shown inline in Income card when additional sources exist)
+
+## Free Tier Alignment
+- [x] Remove Pro gate from Savings & Investments tab (make fully free)
+- [x] Remove isPro flag from Savings & Investments tab navigation item
+- [x] Keep Game Plan tab Pro-gated
+- [x] Keep debt editing Pro-only
+- [x] Keep payment logging Pro-only
+- [x] Enforce 3-debt limit for free users (hide debts beyond index 3, show upsell banner)
+- [x] Show Pro upsell banner after 3rd debt card for free users
+- [x] Keep Avalanche strategy Pro-only
+- [x] Keep projected debt-free date Pro-only
+- [x] Update FREE_FEATURES list on pricing page to accurately reflect what's free
+- [x] Update PRO_FEATURES list to reflect what's actually Pro-only
+
+## Free Tier Debt Limit - Gap Fixes
+- [x] Show debts beyond index 3 with a locked/blurred overlay instead of hiding them
+- [x] Block adding a 4th+ debt in onboarding for free users (show upgrade CTA)
