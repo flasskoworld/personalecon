@@ -162,3 +162,7 @@
 - [x] Make Game Plan tab fully personalized: generate ranked action steps, priority warnings, and month-by-month milestones based on user's actual income, debts, expenses, savings, and strategy
 - [x] Game Plan: show a personalized "Your #1 Move Right Now" hero card based on worst financial signal (high APR debt, negative cashflow, no savings buffer, etc.) — shown as CRITICAL/DO FIRST badge on top priority step
 - [x] Game Plan: show dynamic monthly allocation recommendation (how much to savings vs debt vs buffer) based on actual leftover — shown in savings automation step
+
+## Game Plan Additions
+- [x] Re-add "The 3 Rules" section to Game Plan tab (pay yourself first, attack highest APR, found money goes to plan)
+- [x] Re-add "Quick Wins Right Now" section to Game Plan tab (dynamic, based on user's actual data)

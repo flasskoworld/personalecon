@@ -1344,6 +1344,95 @@ export default function Dashboard() {
               </div>
             )}
 
+            {/* The 3 Rules */}
+            <div className={card}>
+              <div className="flex items-center gap-2 mb-4">
+                <BookOpen size={16} className="text-emerald-400" />
+                <h3 className="text-sm font-bold text-white" style={{ fontFamily: "'Syne', sans-serif" }}>The 3 Rules</h3>
+              </div>
+              <div className="space-y-3">
+                {[
+                  {
+                    num: "01",
+                    title: "Pay yourself first",
+                    desc: savingsBudget > 0
+                      ? `Every payday, move ${currency}${Math.round(savingsBudget).toLocaleString()} to savings before spending anything. Non-negotiable.`
+                      : "Every payday, move money to savings before spending anything. Even a small amount builds the habit.",
+                    color: "#10b981",
+                  },
+                  {
+                    num: "02",
+                    title: "Attack the highest APR debt",
+                    desc: state.debts.length > 0
+                      ? `After minimums, throw every extra dollar at your highest-rate debt. ${state.strategy === "avalanche" ? "You're on Avalanche — this is the mathematically correct move." : "Consider switching to Avalanche to save on interest."}`
+                      : "Once you have debt, after paying minimums throw every extra dollar at the highest-rate balance.",
+                    color: "#f59e0b",
+                  },
+                  {
+                    num: "03",
+                    title: "Found money goes to the plan",
+                    desc: `Tax refund, overtime, selling something — 100% of unexpected income goes to ${totalDebt > 0 ? "debt or savings" : "savings or investments"}. Don't let it disappear into lifestyle.`,
+                    color: "#6366f1",
+                  },
+                ].map((r) => (
+                  <div key={r.num} className="flex gap-4 rounded-xl border border-white/8 bg-white/3 p-4">
+                    <div className="text-2xl font-black shrink-0" style={{ color: r.color, fontFamily: "'Syne', sans-serif" }}>{r.num}</div>
+                    <div>
+                      <div className="font-bold text-white text-sm mb-1" style={{ fontFamily: "'Syne', sans-serif" }}>{r.title}</div>
+                      <div className="text-xs text-slate-400 leading-relaxed">{r.desc}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Quick Wins Right Now */}
+            {(() => {
+              const quickWins: { text: string; color: string }[] = [];
+              if (state.debts.filter((d) => d.apr === 0 && d.balance > 0).length > 0) {
+                quickWins.push({
+                  text: `Wipe your 0% APR debts first (${state.debts.filter((d) => d.apr === 0 && d.balance > 0).map((d) => d.name).join(", ")}) — free wins with no interest cost`,
+                  color: "#10b981",
+                });
+              }
+              if (state.expenses.filter((e) => !e.isEssential).length > 0) {
+                const nonEssTotal = state.expenses.filter((e) => !e.isEssential).reduce((s, e) => s + e.amount, 0);
+                quickWins.push({
+                  text: `Cut non-essential subscriptions to free up ${currency}${Math.round(nonEssTotal).toLocaleString()}/mo`,
+                  color: "#f59e0b",
+                });
+              }
+              if (totalMonthlyInterest > 100) {
+                quickWins.push({
+                  text: `You're paying ${currency}${Math.round(totalMonthlyInterest).toLocaleString()}/mo in interest — every extra dollar to debt directly reduces this`,
+                  color: "#ef4444",
+                });
+              }
+              if (monthlyLeftover > 500) {
+                quickWins.push({
+                  text: `You have ${currency}${Math.round(monthlyLeftover).toLocaleString()}/mo available — automate ${currency}${Math.round(savingsBudget).toLocaleString()} to savings on payday so it never gets spent`,
+                  color: "#6366f1",
+                });
+              }
+              if (quickWins.length === 0) return null;
+              return (
+                <div className={card}>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Zap size={16} className="text-amber-400" />
+                    <h3 className="text-sm font-bold text-white" style={{ fontFamily: "'Syne', sans-serif" }}>Quick Wins Right Now</h3>
+                  </div>
+                  <div className="space-y-2">
+                    {quickWins.map((w, i) => (
+                      <div key={i} className="flex gap-3 rounded-xl border border-white/8 bg-white/3 p-3">
+                        <div className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" style={{ background: w.color }} />
+                        <div className="text-xs text-slate-300 leading-relaxed">{w.text}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* Strategy Comparison */}
             {state.debts.length > 0 && (
               <div className={card}>
