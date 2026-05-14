@@ -160,7 +160,7 @@ export default function Home() {
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-xs font-mono tracking-widest text-emerald-400 uppercase bg-emerald-400/10 px-2 py-1 rounded">
-                  2026 Financial Game Plan
+                  Personal Economy
                 </span>
               </div>
               <h1

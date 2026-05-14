@@ -71,3 +71,8 @@
 - [x] Fix PEDashboard mobile layout (header nav, tabs overflow, KPI grid, debt cards, charts, payment inputs)
 - [x] Fix PEOnboarding mobile layout (step forms, input fields, navigation buttons)
 - [x] Fix PEPricing mobile layout (pricing cards, feature list, CTA)
+
+## App Title Rename
+- [ ] Rename app title in VITE_APP_TITLE secret (manual step: Settings → Secrets → VITE_APP_TITLE → "Personal Economy")
+- [x] Update client/index.html <title> tag (already says "Personal Economy")
+- [x] Update hardcoded references in code files (Home.tsx badge updated)
