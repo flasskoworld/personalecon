@@ -76,3 +76,10 @@
 - [ ] Rename app title in VITE_APP_TITLE secret (manual step: Settings → Secrets → VITE_APP_TITLE → "Personal Economy")
 - [x] Update client/index.html <title> tag (already says "Personal Economy")
 - [x] Update hardcoded references in code files (Home.tsx badge updated)
+
+## Smart Home-Screen Routing
+- [x] Detect if user has a saved personal plan (non-demo, onboarding complete) in localStorage
+- [x] If plan exists: redirect / to /pro/dashboard automatically
+- [x] If no plan: show landing page as normal
+- [x] Handle the case where user is on /pro/* routes and has no plan (redirect to onboarding via PEDashboard guard)
+- [x] Ensure demo mode does NOT trigger the auto-redirect (isDemo check in hasPersonalPlan)

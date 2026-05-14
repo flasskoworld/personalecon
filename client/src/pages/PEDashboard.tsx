@@ -207,9 +207,9 @@ export default function Dashboard() {
   const clock = useLiveClock(state.profile?.firstPayday || "", state.profile?.payFrequency || "biweekly");
   const currency = state.profile?.currency || "$";
 
-  // Redirect to landing if no setup
+  // Redirect to onboarding if no plan has been set up yet
   useEffect(() => {
-    if (!state.setupComplete) navigate("/pro");
+    if (!state.setupComplete) navigate("/pro/onboarding");
   }, [state.setupComplete]);
 
   if (!state.setupComplete || !state.profile) return null;

@@ -9,14 +9,50 @@ import PELanding from "./pages/PELanding";
 import PEOnboarding from "./pages/PEOnboarding";
 import PEDashboard from "./pages/PEDashboard";
 import PEPricing from "./pages/PEPricing";
+import { loadState } from "./lib/peStore";
+
+/**
+ * Returns true if the user has completed onboarding with their own real plan
+ * (not a demo). Read synchronously from localStorage so it always reflects
+ * the latest persisted state.
+ */
+function hasPersonalPlan(): boolean {
+  const state = loadState();
+  return state.setupComplete === true && state.isDemo === false;
+}
+
+/**
+ * Smart root redirect:
+ * - User has a saved personal plan → go straight to their dashboard
+ * - Otherwise → show the landing page
+ */
+function RootRedirect() {
+  if (hasPersonalPlan()) {
+    return <Redirect to="/pro/dashboard" />;
+  }
+  return <Redirect to="/pro" />;
+}
+
+/**
+ * Smart /pro landing:
+ * - User already has a plan → skip the landing page and go to dashboard
+ * - Otherwise → render the landing page normally
+ */
+function ProLandingRoute() {
+  if (hasPersonalPlan()) {
+    return <Redirect to="/pro/dashboard" />;
+  }
+  return <PELanding />;
+}
 
 function Router() {
   return (
     <Switch>
-      {/* Root redirects to the product landing page */}
-      <Route path={"/"} component={() => <Redirect to="/pro" />} />
+      {/* Root: smart redirect based on whether the user has a saved plan */}
+      <Route path={"/"} component={RootRedirect} />
       <Route path={"/personal"} component={Home} />
-      <Route path={"/pro"} component={PELanding} />
+      {/* /pro landing: skipped if user already has a personal plan */}
+      <Route path={"/pro"} component={ProLandingRoute} />
       <Route path={"/pro/pricing"} component={PEPricing} />
       <Route path={"/pro/onboarding"} component={PEOnboarding} />
       <Route path={"/pro/dashboard"} component={PEDashboard} />
