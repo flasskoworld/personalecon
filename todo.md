@@ -166,3 +166,10 @@
 ## Game Plan Additions
 - [x] Re-add "The 3 Rules" section to Game Plan tab (pay yourself first, attack highest APR, found money goes to plan)
 - [x] Re-add "Quick Wins Right Now" section to Game Plan tab (dynamic, based on user's actual data)
+
+## Pre-Launch Sweep Fixes
+- [x] Fix: Replace window.prompt() for expense editing with the AddExpenseModal (bad UX, breaks on mobile Safari)
+- [x] Fix: Budget tab pie chart renders empty when expenses array is empty — add empty state guard
+- [x] Fix: NotFound (404) page uses light theme (white/slate-50) — restyle to match the dark brand
+- [x] Fix: Remove /personal route and Home.tsx dead-end (old Hustle Board — unreachable from UI but still accessible by URL)
+- [x] Fix: Onboarding has no escape route — add a subtle "← Back to home" link in the top bar so users aren't trapped

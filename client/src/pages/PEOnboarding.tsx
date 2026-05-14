@@ -205,8 +205,14 @@ export default function Onboarding() {
           </div>
           <span className="text-sm font-bold text-white" style={{ fontFamily: "'Syne', sans-serif" }}>Personal Economy</span>
         </div>
-        <div className="flex items-center gap-2 text-xs text-slate-500">
-          Step {step} of {STEPS.length}
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-slate-500">Step {step} of {STEPS.length}</span>
+          <button
+            onClick={() => navigate("/pro")}
+            className="text-xs text-slate-600 hover:text-slate-400 transition-colors"
+          >
+            ← Exit
+          </button>
         </div>
       </div>
 

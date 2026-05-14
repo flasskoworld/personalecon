@@ -4,7 +4,6 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch, Redirect } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import Home from "./pages/Home";
 import PELanding from "./pages/PELanding";
 import PEOnboarding from "./pages/PEOnboarding";
 import PEDashboard from "./pages/PEDashboard";
@@ -49,7 +48,6 @@ function Router() {
     <Switch>
       {/* Root: smart redirect based on whether the user has a saved plan */}
       <Route path={"/"} component={RootRedirect} />
-      <Route path={"/personal"} component={Home} />
       {/* /pro landing: skipped if user already has a personal plan */}
       <Route path={"/pro"} component={ProLandingRoute} />
       <Route path={"/pro/onboarding"} component={PEOnboarding} />

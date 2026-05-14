@@ -1,52 +1,57 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { AlertCircle, Home } from "lucide-react";
+import { AlertCircle, Home, ArrowLeft } from "lucide-react";
 import { useLocation } from "wouter";
 
 export default function NotFound() {
-  const [, setLocation] = useLocation();
-
-  const handleGoHome = () => {
-    setLocation("/");
-  };
+  const [, navigate] = useLocation();
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
-      <Card className="w-full max-w-lg mx-4 shadow-lg border-0 bg-white/80 backdrop-blur-sm">
-        <CardContent className="pt-8 pb-8 text-center">
-          <div className="flex justify-center mb-6">
-            <div className="relative">
-              <div className="absolute inset-0 bg-red-100 rounded-full animate-pulse" />
-              <AlertCircle className="relative h-16 w-16 text-red-500" />
+    <div className="min-h-screen w-full flex items-center justify-center" style={{ background: "#080a0f", fontFamily: "'Inter', sans-serif" }}>
+      <div className="w-full max-w-md mx-4 text-center">
+        {/* Icon */}
+        <div className="flex justify-center mb-6">
+          <div className="relative">
+            <div className="absolute inset-0 rounded-full animate-pulse" style={{ background: "rgba(239,68,68,0.15)" }} />
+            <div className="relative w-20 h-20 rounded-full flex items-center justify-center border border-rose-500/20" style={{ background: "rgba(239,68,68,0.08)" }}>
+              <AlertCircle className="w-10 h-10 text-rose-400" />
             </div>
           </div>
+        </div>
 
-          <h1 className="text-4xl font-bold text-slate-900 mb-2">404</h1>
+        {/* 404 */}
+        <div
+          className="text-7xl font-black mb-3"
+          style={{ fontFamily: "'Syne', sans-serif", background: "linear-gradient(135deg, #10b981, #059669)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
+        >
+          404
+        </div>
 
-          <h2 className="text-xl font-semibold text-slate-700 mb-4">
-            Page Not Found
-          </h2>
+        <h2 className="text-xl font-bold text-white mb-3" style={{ fontFamily: "'Syne', sans-serif" }}>
+          Page Not Found
+        </h2>
 
-          <p className="text-slate-600 mb-8 leading-relaxed">
-            Sorry, the page you are looking for doesn't exist.
-            <br />
-            It may have been moved or deleted.
-          </p>
+        <p className="text-slate-400 text-sm mb-8 leading-relaxed">
+          This page doesn't exist or may have been moved. Head back to your dashboard to continue tracking your financial progress.
+        </p>
 
-          <div
-            id="not-found-button-group"
-            className="flex flex-col sm:flex-row gap-3 justify-center"
+        {/* Actions */}
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <button
+            onClick={() => navigate("/pro/dashboard")}
+            className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-black transition-all hover:opacity-90"
+            style={{ background: "linear-gradient(135deg, #10b981, #059669)" }}
           >
-            <Button
-              onClick={handleGoHome}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
-            >
-              <Home className="w-4 h-4 mr-2" />
-              Go Home
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+            <Home className="w-4 h-4" />
+            Go to Dashboard
+          </button>
+          <button
+            onClick={() => window.history.back()}
+            className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold text-slate-400 border border-white/10 hover:border-white/20 hover:text-white transition-all"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Go Back
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

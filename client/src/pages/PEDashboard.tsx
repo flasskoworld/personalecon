@@ -332,6 +332,66 @@ function AddExpenseModal({ onSave, onClose, currency }: {
   );
 }
 
+// ── Edit Expense Modal ───────────────────────────────────────────────────────
+function EditExpenseModal({ expense, onSave, onClose, currency }: {
+  expense: Expense; onSave: (id: string, fields: Partial<Expense>) => void; onClose: () => void; currency: string;
+}) {
+  const [label, setLabel] = useState(expense.label);
+  const [amount, setAmount] = useState(String(expense.amount));
+  const [category, setCategory] = useState<Expense["category"]>(expense.category);
+  const [isEssential, setIsEssential] = useState(expense.isEssential);
+
+  const save = () => {
+    if (!label.trim()) { toast.error("Enter an expense name"); return; }
+    if (!amount || Number(amount) <= 0) { toast.error("Enter a valid amount"); return; }
+    onSave(expense.id, { label: label.trim(), amount: Number(amount), category, isEssential });
+    onClose();
+    toast.success(`${label} updated`);
+  };
+
+  const selectClass = "w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all";
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}>
+      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0d1117] p-6">
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="font-bold text-white" style={{ fontFamily: "'Syne', sans-serif" }}>Edit Expense</h3>
+          <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors"><X size={18} /></button>
+        </div>
+        <div className="space-y-4">
+          <div><label className={labelClass}>Expense Name</label><input className={inputClass} value={label} onChange={(e) => setLabel(e.target.value)} /></div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><label className={labelClass}>Monthly Amount</label>
+              <div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">{currency}</span>
+                <input className={inputClass + " pl-6"} type="number" value={amount} onChange={(e) => setAmount(e.target.value)} /></div></div>
+            <div><label className={labelClass}>Category</label>
+              <select className={selectClass} value={category} onChange={(e) => setCategory(e.target.value as Expense["category"])}>
+                {EXPENSE_CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+              </select></div>
+          </div>
+          <div className="flex items-center gap-3 rounded-xl border border-white/8 bg-white/3 p-3">
+            <button
+              type="button"
+              onClick={() => setIsEssential((v) => !v)}
+              className={`w-10 h-6 rounded-full transition-all flex items-center ${isEssential ? "bg-amber-500" : "bg-white/10"}`}
+            >
+              <span className={`w-4 h-4 rounded-full bg-white transition-all mx-1 ${isEssential ? "translate-x-4" : "translate-x-0"}`} />
+            </button>
+            <div>
+              <div className="text-xs font-semibold text-white">{isEssential ? "Essential (fixed)" : "Non-essential (cuttable)"}</div>
+              <div className="text-xs text-slate-500">{isEssential ? "Rent, utilities, insurance" : "Subscriptions, dining, entertainment"}</div>
+            </div>
+          </div>
+        </div>
+        <div className="flex gap-3 mt-6">
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-lg border border-white/10 text-sm text-slate-400 hover:text-white transition-all">Cancel</button>
+          <button onClick={save} className="flex-1 py-2.5 rounded-lg text-sm font-bold text-black transition-all hover:opacity-90" style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)" }}>Save Changes</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Main Dashboard ─────────────────────────────────────────────────────────────
 export default function Dashboard() {
   const [, navigate] = useLocation();
@@ -342,6 +402,7 @@ export default function Dashboard() {
   const [editingInvest, setEditingInvest] = useState<Investment | null>(null);
   const [showAddDebt, setShowAddDebt] = useState(false);
   const [showAddExpense, setShowAddExpense] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [payAmount, setPayAmount] = useState<Record<string, string>>({});
   const [saveAmount, setSaveAmount] = useState("");
   const [showReset, setShowReset] = useState(false);
@@ -894,16 +955,23 @@ export default function Dashboard() {
             <div className="grid md:grid-cols-2 gap-4 sm:gap-6">              {/* Pie chart */}
               <div className={card}>
                 <h3 className="text-sm font-bold text-white mb-4" style={{ fontFamily: "'Syne', sans-serif" }}>Spending Breakdown</h3>
-                <ResponsiveContainer width="100%" height={200}>
-                  <PieChart>
-                    <Pie data={state.expenses} dataKey="amount" nameKey="label" cx="50%" cy="50%" outerRadius={80} innerRadius={50}>
-                      {state.expenses.map((e, i) => (
-                        <Cell key={e.id} fill={["#10b981", "#f59e0b", "#6366f1", "#ec4899", "#14b8a6", "#f97316", "#8b5cf6", "#06b6d4"][i % 8]} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(v: number) => [`${currency}${v.toLocaleString()}`, ""]} contentStyle={{ background: "#0d1117", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 12 }} />
-                  </PieChart>
-                </ResponsiveContainer>
+                {state.expenses.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-[200px] text-center">
+                    <p className="text-slate-500 text-sm">No expenses added yet.</p>
+                    <button onClick={() => setShowAddExpense(true)} className="mt-3 text-xs text-amber-400 hover:text-amber-300 underline transition-colors">Add your first expense</button>
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height={200}>
+                    <PieChart>
+                      <Pie data={state.expenses} dataKey="amount" nameKey="label" cx="50%" cy="50%" outerRadius={80} innerRadius={50}>
+                        {state.expenses.map((e, i) => (
+                          <Cell key={e.id} fill={["#10b981", "#f59e0b", "#6366f1", "#ec4899", "#14b8a6", "#f97316", "#8b5cf6", "#06b6d4"][i % 8]} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(v: number) => [`${currency}${v.toLocaleString()}`, ""]} contentStyle={{ background: "#0d1117", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 12 }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
               </div>
 
               {/* Essential vs non-essential */}
@@ -948,15 +1016,9 @@ export default function Dashboard() {
                       {!e.isEssential && <span className="text-xs text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded">cuttable</span>}
                       <span className="text-sm font-mono font-semibold text-white">{currency}{e.amount.toLocaleString()}</span>
                       <button
-                        onClick={() => {
-                          const newAmount = prompt(`Edit amount for ${e.label}:`, String(e.amount));
-                          if (newAmount !== null && Number(newAmount) > 0) {
-                            updateExpense(e.id, { amount: Number(newAmount) });
-                            toast.success(`${e.label} updated`);
-                          }
-                        }}
+                        onClick={() => setEditingExpense(e)}
                         className="text-slate-600 hover:text-white p-1 rounded hover:bg-white/5 transition-all"
-                        title="Edit amount"
+                        title="Edit expense"
                       ><Edit3 size={12} /></button>
                       <button
                         onClick={() => { removeExpense(e.id); toast.success(`${e.label} removed`); }}
@@ -1505,6 +1567,15 @@ export default function Dashboard() {
           currency={currency}
           onSave={(expense) => addExpense(expense)}
           onClose={() => setShowAddExpense(false)}
+        />
+      )}
+
+      {editingExpense && (
+        <EditExpenseModal
+          expense={editingExpense}
+          currency={currency}
+          onSave={(id, fields) => updateExpense(id, fields)}
+          onClose={() => setEditingExpense(null)}
         />
       )}
 
