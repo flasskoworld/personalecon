@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { boolean, int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -20,6 +20,14 @@ export const users = mysqlTable("users", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
+  /** Stripe customer ID (cus_...) — stored after first checkout or customer creation */
+  stripeCustomerId: varchar("stripeCustomerId", { length: 64 }),
+  /** Active Stripe subscription ID (sub_...) — null if no active subscription */
+  stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 64 }),
+  /** Whether the user has an active Pro subscription (synced via webhook) */
+  isProSubscriber: boolean("isProSubscriber").default(false).notNull(),
+  /** Timestamp when Pro subscription was last activated */
+  proActivatedAt: timestamp("proActivatedAt"),
 });
 
 export type User = typeof users.$inferSelect;

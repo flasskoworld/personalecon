@@ -124,3 +124,15 @@
 - [x] Add cancel subscription button/flow for Pro users (footer button + confirmation modal)
 - [x] Add contact support link (streetecon@proton.me) in dashboard footer
 - [x] Ensure cancel subscription clears Pro status locally and shows downgrade message (deactivatePro + toast)
+
+## One-Click Billing Cancellation (Server-Side)
+- [x] Add stripeCustomerId and stripeSubscriptionId columns to users table in drizzle schema
+- [x] Run pnpm db:push to migrate the schema
+- [ ] Update Stripe checkout to create/retrieve Stripe customer and store customer ID on user record
+- [ ] Update webhook to store subscriptionId and sync Pro status server-side on checkout.session.completed
+- [ ] Add tRPC procedure: stripe.cancelSubscription (calls Stripe API to cancel, clears subscription ID)
+- [ ] Add tRPC procedure: stripe.getPortalUrl (creates Stripe Customer Portal session, returns URL)
+- [ ] Add tRPC procedure: stripe.getSubscriptionStatus (returns current Pro status from DB)
+- [ ] Update dashboard Cancel Subscription button to call server-side cancel instead of just clearing localStorage
+- [ ] Update Pro status check to also verify against server-side subscription status for authenticated users
+- [ ] Write vitest tests for the new stripe procedures

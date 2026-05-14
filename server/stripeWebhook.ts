@@ -2,6 +2,7 @@
 // Registered BEFORE express.json() so raw body is available for signature verification
 import express, { type Express, type Request, type Response } from "express";
 import Stripe from "stripe";
+import { getUserByStripeCustomerId, updateUserStripeInfo } from "./db";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
   apiVersion: "2026-04-22.dahlia",
@@ -40,44 +41,115 @@ export function registerStripeWebhook(app: Express) {
       switch (event.type) {
         case "checkout.session.completed": {
           const session = event.data.object as Stripe.Checkout.Session;
+          const customerId = session.customer as string | null;
+          const subscriptionId = session.subscription as string | null;
+          const userId = session.metadata?.user_id;
+
           console.log("[Webhook] checkout.session.completed", {
             sessionId: session.id,
-            customerId: session.customer,
-            userId: session.metadata?.user_id,
+            customerId,
+            subscriptionId,
+            userId,
             plan: session.metadata?.plan,
-            email: session.metadata?.customer_email,
           });
-          // TODO: Persist subscription status to DB when user accounts are added
+
+          // Persist Pro status to DB if we can identify the user
+          if (customerId && subscriptionId) {
+            try {
+              const dbUser = await getUserByStripeCustomerId(customerId);
+              if (dbUser) {
+                await updateUserStripeInfo(dbUser.id, {
+                  stripeCustomerId: customerId,
+                  stripeSubscriptionId: subscriptionId,
+                  isProSubscriber: true,
+                  proActivatedAt: new Date(),
+                });
+                console.log(`[Webhook] Pro activated for user ${dbUser.id}`);
+              } else {
+                console.warn(`[Webhook] No user found for Stripe customer ${customerId}. Pro status not persisted.`);
+              }
+            } catch (err) {
+              console.error("[Webhook] Failed to persist Pro status:", err);
+            }
+          }
           break;
         }
 
         case "customer.subscription.created":
         case "customer.subscription.updated": {
           const sub = event.data.object as Stripe.Subscription;
+          const customerId = sub.customer as string;
+          const isActive = sub.status === "active" || sub.status === "trialing";
+
           console.log(`[Webhook] ${event.type}`, {
             subscriptionId: sub.id,
-            customerId: sub.customer,
+            customerId,
             status: sub.status,
+            isActive,
           });
+
+          try {
+            const dbUser = await getUserByStripeCustomerId(customerId);
+            if (dbUser) {
+              await updateUserStripeInfo(dbUser.id, {
+                stripeSubscriptionId: isActive ? sub.id : null,
+                isProSubscriber: isActive,
+                ...(isActive && !dbUser.proActivatedAt ? { proActivatedAt: new Date() } : {}),
+              });
+              console.log(`[Webhook] Subscription status updated for user ${dbUser.id}: isProSubscriber=${isActive}`);
+            }
+          } catch (err) {
+            console.error("[Webhook] Failed to update subscription status:", err);
+          }
           break;
         }
 
         case "customer.subscription.deleted": {
           const sub = event.data.object as Stripe.Subscription;
+          const customerId = sub.customer as string;
+
           console.log("[Webhook] Subscription cancelled", {
             subscriptionId: sub.id,
-            customerId: sub.customer,
+            customerId,
           });
+
+          try {
+            const dbUser = await getUserByStripeCustomerId(customerId);
+            if (dbUser) {
+              await updateUserStripeInfo(dbUser.id, {
+                stripeSubscriptionId: null,
+                isProSubscriber: false,
+              });
+              console.log(`[Webhook] Pro deactivated for user ${dbUser.id}`);
+            }
+          } catch (err) {
+            console.error("[Webhook] Failed to deactivate Pro on subscription deletion:", err);
+          }
           break;
         }
 
         case "invoice.paid": {
           const invoice = event.data.object as Stripe.Invoice;
+          const customerId = invoice.customer as string;
+
           console.log("[Webhook] Invoice paid", {
             invoiceId: invoice.id,
-            customerId: invoice.customer,
+            customerId,
             amount: invoice.amount_paid,
           });
+
+          // Ensure Pro stays active on renewal payments
+          try {
+            const dbUser = await getUserByStripeCustomerId(customerId);
+            if (dbUser && !dbUser.isProSubscriber) {
+              await updateUserStripeInfo(dbUser.id, {
+                isProSubscriber: true,
+                proActivatedAt: dbUser.proActivatedAt ?? new Date(),
+              });
+            }
+          } catch (err) {
+            console.error("[Webhook] Failed to reactivate Pro on invoice.paid:", err);
+          }
           break;
         }
 
@@ -87,6 +159,8 @@ export function registerStripeWebhook(app: Express) {
             invoiceId: invoice.id,
             customerId: invoice.customer,
           });
+          // Don't immediately revoke Pro on payment failure — Stripe will retry
+          // and send customer.subscription.updated with status "past_due" if needed
           break;
         }
 

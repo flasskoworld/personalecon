@@ -89,4 +89,32 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+export async function getUserById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getUserByStripeCustomerId(stripeCustomerId: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(users).where(eq(users.stripeCustomerId, stripeCustomerId)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function updateUserStripeInfo(userId: number, data: {
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string | null;
+  isProSubscriber?: boolean;
+  proActivatedAt?: Date | null;
+}) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot update stripe info: database not available");
+    return;
+  }
+  await db.update(users).set(data).where(eq(users.id, userId));
+}
+
 // TODO: add feature queries here as your schema grows.

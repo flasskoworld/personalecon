@@ -6,6 +6,8 @@ import { useState, useEffect, useRef } from "react";
 import { PoweredByFooter, PoweredByBadge } from "@/components/PoweredByFooter";
 import { ProGate, ProBadge } from "@/components/ProGate";
 import { useProStatus } from "@/hooks/useProStatus";
+import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
 import { useStore } from "@/hooks/usePEStore";
 import {
@@ -196,6 +198,13 @@ export default function Dashboard() {
   const [, navigate] = useLocation();
   const { state, computed, makePayment, updateDebt, addSavings, updateInvestment, addInvestment, removeInvestment, setStrategy, resetAll, updatePrimaryIncome, addAdditionalIncome, removeAdditionalIncome } = useStore();
   const { isPro, deactivatePro } = useProStatus();
+  const { isAuthenticated } = useAuth();
+  const cancelSubscriptionMutation = trpc.stripe.cancelSubscription.useMutation();
+  const getPortalUrlMutation = trpc.stripe.getPortalUrl.useMutation();
+  const { data: subscriptionStatus } = trpc.stripe.getSubscriptionStatus.useQuery(
+    undefined,
+    { enabled: !!(isPro && isAuthenticated) }
+  );
   const effectivelyPro = isPro || state.isDemo; // Demo mode unlocks all Pro features for preview
   const [activeTab, setActiveTab] = useState<"overview" | "debt" | "budget" | "savings" | "plan">("overview");
   const [editingDebt, setEditingDebt] = useState<Debt | null>(null);
@@ -1180,19 +1189,53 @@ export default function Dashboard() {
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
             </div>
             <h3 className="font-bold text-white mb-2" style={{ fontFamily: "'Syne', sans-serif" }}>Cancel Pro Subscription?</h3>
-            <p className="text-sm text-slate-400 mb-2">Your Pro features will be removed from this device. Your plan data stays saved.</p>
-            <p className="text-xs text-slate-500 mb-6">To cancel your billing, please also cancel in your Stripe account or email us at <a href="mailto:streetecon@proton.me" className="text-emerald-400 hover:underline">streetecon@proton.me</a>.</p>
+            <p className="text-sm text-slate-400 mb-2">Your Pro subscription will be cancelled immediately. Your plan data stays saved.</p>
+            {subscriptionStatus?.stripeSubscriptionId ? (
+              <p className="text-xs text-slate-500 mb-6">
+                Need to update payment details instead?{" "}
+                <button
+                  onClick={async () => {
+                    try {
+                      const { url } = await getPortalUrlMutation.mutateAsync({ returnUrl: window.location.href });
+                      window.open(url, "_blank");
+                    } catch {
+                      toast.error("Could not open billing portal. Please email streetecon@proton.me");
+                    }
+                  }}
+                  className="text-emerald-400 hover:underline"
+                >
+                  Manage billing
+                </button>.
+              </p>
+            ) : (
+              <p className="text-xs text-slate-500 mb-6">
+                To cancel your billing, please also cancel in your Stripe account or email us at{" "}
+                <a href="mailto:streetecon@proton.me" className="text-emerald-400 hover:underline">streetecon@proton.me</a>.
+              </p>
+            )}
             <div className="flex gap-3">
               <button onClick={() => setShowCancelConfirm(false)} className="flex-1 py-2.5 rounded-lg border border-white/10 text-sm text-slate-400 hover:text-white transition-all">Keep Pro</button>
               <button
-                onClick={() => {
-                  deactivatePro();
-                  setShowCancelConfirm(false);
-                  toast.success("Pro subscription removed from this device.");
+                disabled={cancelSubscriptionMutation.isPending}
+                onClick={async () => {
+                  if (subscriptionStatus?.stripeSubscriptionId) {
+                    try {
+                      await cancelSubscriptionMutation.mutateAsync();
+                      deactivatePro();
+                      setShowCancelConfirm(false);
+                      toast.success("Subscription cancelled. Pro access has been removed.");
+                    } catch {
+                      toast.error("Could not cancel automatically. Please email streetecon@proton.me");
+                    }
+                  } else {
+                    deactivatePro();
+                    setShowCancelConfirm(false);
+                    toast.success("Pro removed from this device. Please cancel billing in your Stripe account.");
+                  }
                 }}
-                className="flex-1 py-2.5 rounded-lg text-sm font-bold text-white bg-rose-500 hover:bg-rose-600 transition-all"
+                className="flex-1 py-2.5 rounded-lg text-sm font-bold text-white bg-rose-500 hover:bg-rose-600 disabled:opacity-50 transition-all"
               >
-                Remove Pro
+                {cancelSubscriptionMutation.isPending ? "Cancelling..." : "Cancel Subscription"}
               </button>
             </div>
           </div>
