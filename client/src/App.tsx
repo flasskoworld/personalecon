@@ -10,6 +10,9 @@ import PEOnboarding from "./pages/PEOnboarding";
 import PEDashboard from "./pages/PEDashboard";
 import PEPricing from "./pages/PEPricing";
 import { loadState } from "./lib/peStore";
+// Import useProStatus so the module-level upgrade param check runs at app startup,
+// persisting Pro status in localStorage before any routing guards execute.
+import "./hooks/useProStatus";
 
 /**
  * Returns true if the user has completed onboarding with their own real plan

@@ -83,3 +83,10 @@
 - [x] If no plan: show landing page as normal
 - [x] Handle the case where user is on /pro/* routes and has no plan (redirect to onboarding via PEDashboard guard)
 - [x] Ensure demo mode does NOT trigger the auto-redirect (isDemo check in hasPersonalPlan)
+
+## App Title & Post-Payment Pro Flow
+- [x] App title: index.html already says "Personal Economy"; login screen title is platform-managed (VITE_APP_TITLE is a built-in system secret, not editable from Secrets UI)
+- [x] Audit post-Stripe-payment success flow: success_url correctly points to /pro/dashboard?upgraded=true
+- [x] Ensure Pro status is unlocked immediately: useProStatus now runs checkAndPersistUpgradeParam() at module-load time (before any React render)
+- [x] Post-payment redirect goes to /pro/dashboard (Stripe success_url confirmed)
+- [x] Pro features active on dashboard after payment: isPro initialised from localStorage synchronously so features unlock on first render after redirect
