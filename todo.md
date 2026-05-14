@@ -143,3 +143,14 @@
 - [x] Add payment success confirmation toast/banner when user returns from Stripe with ?upgraded=true — /pro/success page shows full confirmation screen
 - [x] Fix cancel subscription visibility: getSubscriptionStatus now runs for all authenticated users (not just when isPro is set)
 - [x] Add a dedicated /pro/success page as the Stripe success_url to reliably handle Pro activation before routing to dashboard
+
+## Make App Fully Free (Remove All Pro Gating)
+- [x] Remove effectivelyPro/isPro checks from PEDashboard — set all features as always unlocked
+- [x] Remove ProGate wrapper components and ProBadge lock icons from all tabs
+- [x] Remove "FREE → Upgrade" button from header, replace with plain app branding
+- [x] Remove "Cancel Subscription" and billing-related footer links
+- [x] Remove Stripe checkout mutation from PEPricing / remove pricing page from routing
+- [x] Remove /pro/success page from routing
+- [x] Remove Stripe-related tRPC calls from PEDashboard (cancelSubscription, getPortalUrl, getSubscriptionStatus)
+- [x] Update PELanding to remove pricing/upgrade CTAs (was already clean)
+- [x] Remove useProStatus hook usage from dashboard (hook file kept but no longer imported in dashboard)

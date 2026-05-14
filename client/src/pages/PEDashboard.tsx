@@ -4,10 +4,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import { PoweredByFooter, PoweredByBadge } from "@/components/PoweredByFooter";
-import { ProGate, ProBadge } from "@/components/ProGate";
-import { useProStatus } from "@/hooks/useProStatus";
-import { trpc } from "@/lib/trpc";
-import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
 import { useStore } from "@/hooks/usePEStore";
 import {
@@ -197,35 +193,13 @@ function InvestEditModal({ inv, onSave, onClose, currency }: {
 export default function Dashboard() {
   const [, navigate] = useLocation();
   const { state, computed, makePayment, updateDebt, addSavings, updateInvestment, addInvestment, removeInvestment, setStrategy, resetAll, updatePrimaryIncome, addAdditionalIncome, removeAdditionalIncome } = useStore();
-  const { isPro, activatePro, deactivatePro } = useProStatus();
-  const { isAuthenticated } = useAuth();
-  const cancelSubscriptionMutation = trpc.stripe.cancelSubscription.useMutation();
-  const getPortalUrlMutation = trpc.stripe.getPortalUrl.useMutation();
-  // Always fetch subscription status when authenticated so we can:
-  // 1. Sync Pro status from server to localStorage (covers webhook-activated Pro)
-  // 2. Show cancel subscription option even if localStorage doesn't have Pro yet
-  const { data: subscriptionStatus } = trpc.stripe.getSubscriptionStatus.useQuery(
-    undefined,
-    { enabled: !!isAuthenticated }
-  );
-  // Sync server-side Pro status: if server confirms Pro but local state doesn't know, activate locally
-  useEffect(() => {
-    if (isAuthenticated && subscriptionStatus?.isProSubscriber && !isPro) {
-      activatePro();
-    }
-  }, [isAuthenticated, subscriptionStatus?.isProSubscriber, isPro]);
-  // For authenticated users, trust server status; for unauthenticated, trust localStorage
-  const serverConfirmedPro = isAuthenticated && subscriptionStatus !== undefined
-    ? subscriptionStatus.isProSubscriber
-    : isPro;
-  const effectivelyPro = serverConfirmedPro || state.isDemo; // Demo mode unlocks all Pro features for preview
+  // All features are free — no Pro gating
   const [activeTab, setActiveTab] = useState<"overview" | "debt" | "budget" | "savings" | "plan">("overview");
   const [editingDebt, setEditingDebt] = useState<Debt | null>(null);
   const [editingInvest, setEditingInvest] = useState<Investment | null>(null);
   const [payAmount, setPayAmount] = useState<Record<string, string>>({});
   const [saveAmount, setSaveAmount] = useState("");
   const [showReset, setShowReset] = useState(false);
-  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   // Income editor state (must be declared before early return to follow rules of hooks)
   const [showIncomeEditor, setShowIncomeEditor] = useState(false);
   const [incomeEditVal, setIncomeEditVal] = useState(state.profile?.income?.toString() || "");
@@ -259,7 +233,7 @@ export default function Dashboard() {
     { id: "debt", label: "Debt Tracker", icon: <Shield size={15} /> },
     { id: "budget", label: "Budget", icon: <Layers size={15} /> },
     { id: "savings", label: "Savings & Investments", icon: <TrendingUp size={15} /> },
-    { id: "plan", label: "Game Plan", icon: <Target size={15} />, isPro: true },
+    { id: "plan", label: "Game Plan", icon: <Target size={15} /> },
   ];
 
   return (
@@ -271,14 +245,7 @@ export default function Dashboard() {
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-md flex items-center justify-center text-sm font-black" style={{ background: "linear-gradient(135deg, #10b981, #059669)", color: "#fff" }}>£</div>
             <span className="text-sm font-bold hidden xs:inline sm:inline" style={{ fontFamily: "'Syne', sans-serif" }}>Personal Economy</span>
-            {state.isDemo && <span className="text-xs bg-amber-500/15 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full font-mono">DEMO</span>}
-            {effectivelyPro && !state.isDemo ? (
-              <span className="text-xs bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-mono">PRO ✓</span>
-            ) : state.isDemo ? (
-              <span className="text-xs bg-indigo-500/15 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded-full font-mono">DEMO PREVIEW</span>
-            ) : (
-              <button onClick={() => navigate("/pro/pricing")} className="text-xs bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full font-mono hover:bg-amber-500/20 transition-all">FREE → Upgrade</button>
-            )}
+            {state.isDemo && <span className="text-xs bg-indigo-500/15 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded-full font-mono">DEMO PREVIEW</span>}
           </div>
           <div className="hidden md:flex items-center gap-4 text-xs text-slate-500 font-mono">
             <span>{clock.now.toLocaleTimeString()}</span>
@@ -369,10 +336,7 @@ export default function Dashboard() {
             {TABS.map((t) => (
               <button
                 key={t.id}
-                onClick={() => {
-                  if (t.isPro && !effectivelyPro) { navigate("/pro/pricing"); return; }
-                  setActiveTab(t.id as typeof activeTab);
-                }}
+                onClick={() => setActiveTab(t.id as typeof activeTab)}
                 className={`flex items-center justify-center gap-1 sm:gap-1.5 px-3 sm:px-4 py-3 sm:py-3.5 text-xs sm:text-sm font-medium whitespace-nowrap border-b-2 transition-all min-w-[44px] sm:min-w-0 ${
                   activeTab === t.id
                     ? "border-emerald-500 text-white"
@@ -381,7 +345,6 @@ export default function Dashboard() {
               >
                 <span className="flex-shrink-0">{t.icon}</span>
                 <span className="hidden sm:inline">{t.label}</span>
-                {t.isPro && !effectivelyPro && <ProBadge />}
               </button>
             ))}
           </div>
@@ -414,8 +377,7 @@ export default function Dashboard() {
             )}
 
             <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
-              {/* Cash Flow Breakdown — Pro Feature */}
-              <ProGate isPro={effectivelyPro} featureName="Monthly Cash Flow Breakdown" description="See exactly where every dollar goes: income vs. fixed expenses vs. interest bleed vs. available cash — broken down with visual bars.">
+              {/* Cash Flow Breakdown */}
                 <div className={card}>
                   <h3 className="text-sm font-bold text-white mb-4" style={{ fontFamily: "'Syne', sans-serif" }}>Cash Flow Breakdown</h3>
                   <div className="space-y-2.5">
@@ -437,7 +399,6 @@ export default function Dashboard() {
                     ))}
                   </div>
                 </div>
-              </ProGate>
 
               {/* Strategy Comparison */}
               {state.debts.length > 0 && (
@@ -621,7 +582,7 @@ export default function Dashboard() {
                     {(["snowball", "avalanche"] as const).map((s) => (
                       <button
                         key={s}
-                        onClick={() => { if (s === "avalanche" && !effectivelyPro) { navigate("/pro/pricing"); return; } setStrategy(s); }}
+                        onClick={() => setStrategy(s)}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
                           state.strategy === s
                             ? s === "avalanche" ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-400" : "bg-indigo-500/15 border-indigo-500/40 text-indigo-400"
@@ -630,20 +591,10 @@ export default function Dashboard() {
                       >
                         {s === "avalanche" ? <Flame size={12} /> : <Snowflake size={12} />}
                         {s === "avalanche" ? "Avalanche 🔥" : "Snowball ❄️"}
-                        {s === "avalanche" && !effectivelyPro && <ProBadge />}
                       </button>
                     ))}
                   </div>
-                  {effectivelyPro ? (
-                    <span className="text-xs text-slate-600">Debt-free by: <span className="text-white">{getDebtFreeDate(currentSim.months)}</span></span>
-                  ) : (
-                    <button
-                      onClick={() => navigate("/pro/pricing")}
-                      className="flex items-center gap-1.5 text-xs text-slate-600 hover:text-amber-400 transition-colors"
-                    >
-                      Debt-free by: <span className="text-slate-500 line-through">--/----</span> <ProBadge />
-                    </button>
-                  )}
+                  <span className="text-xs text-slate-600">Debt-free by: <span className="text-white">{getDebtFreeDate(currentSim.months)}</span></span>
                 </div>
 
                 {/* Interest bleed bar */}
@@ -671,33 +622,16 @@ export default function Dashboard() {
                 {/* Debt cards */}
                 <div className="space-y-4">
                   {sortedDebts.map((debt, idx) => {
-                    // Free users can see up to 3 debts but actions are locked
-                    const isLocked = !effectivelyPro && idx >= 3;
                     const progress = debt.originalBalance > 0 ? Math.min(100, (debt.paid / (debt.originalBalance)) * 100) : 0;
                     const isPaidOff = debt.balance <= 0;
                     const isTarget = idx === 0 && !isPaidOff;
                     return (
                       <div
                         key={debt.id}
-                        className={`rounded-2xl border p-5 transition-all relative ${isTarget ? "border-opacity-40" : "border-white/8"} ${isPaidOff ? "opacity-50" : ""} ${isLocked ? "overflow-hidden" : ""}`}
+                        className={`rounded-2xl border p-5 transition-all relative ${isTarget ? "border-opacity-40" : "border-white/8"} ${isPaidOff ? "opacity-50" : ""}`}
                         style={{ borderColor: isTarget ? debt.color : undefined, background: isTarget ? debt.color + "08" : "rgba(255,255,255,0.02)" }}
                       >
-                        {/* Locked overlay for free users beyond 3 debts */}
-                        {isLocked && (
-                          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 rounded-2xl" style={{ background: "rgba(8,10,15,0.82)", backdropFilter: "blur(4px)" }}>
-                            <div className="text-center">
-                              <div className="text-sm font-bold text-amber-400 mb-1">Pro feature</div>
-                              <div className="text-xs text-slate-400">Upgrade to track unlimited debts</div>
-                            </div>
-                            <button
-                              onClick={() => navigate("/pro/pricing")}
-                              className="px-4 py-1.5 rounded-lg text-xs font-bold text-black"
-                              style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)" }}
-                            >
-                              Unlock Pro
-                            </button>
-                          </div>
-                        )}
+
                         <div className="flex items-start justify-between mb-3 gap-2">
                           <div className="flex items-center gap-2.5">
                             <div className="w-3 h-3 rounded-full shrink-0" style={{ background: debt.color }} />
@@ -712,12 +646,11 @@ export default function Dashboard() {
                             {isTarget && !isPaidOff && <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: debt.color + "20", color: debt.color }}>TARGET</span>}
                             {isPaidOff && <span className="text-xs font-bold text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded-full">PAID OFF ✓</span>}
                             <button
-                              onClick={() => { if (!effectivelyPro) { navigate("/pro/pricing"); return; } setEditingDebt(debt); }}
+                              onClick={() => setEditingDebt(debt)}
                               className="text-slate-500 hover:text-white p-1.5 rounded-lg hover:bg-white/5 transition-all"
-                              title={effectivelyPro ? "Edit debt" : "Upgrade to Pro to edit debts"}
+                              title="Edit debt"
                             >
                               <Edit3 size={13} />
-                              {!effectivelyPro && <span className="sr-only">Pro</span>}
                             </button>
                           </div>
                         </div>
@@ -753,50 +686,26 @@ export default function Dashboard() {
                                 onChange={(e) => setPayAmount((p) => ({ ...p, [debt.id]: e.target.value }))}
                               />
                             </div>
-                            {effectivelyPro ? (
-                              <button
-                                onClick={() => {
-                                  const amt = Number(payAmount[debt.id]);
-                                  if (!amt || amt <= 0) { toast.error("Enter a payment amount"); return; }
-                                  makePayment(debt.id, amt);
-                                  setPayAmount((p) => ({ ...p, [debt.id]: "" }));
-                                  toast.success(`${currency}${amt} payment logged on ${debt.name}`);
-                                }}
-                                className="px-4 py-2 rounded-lg text-sm font-bold text-black transition-all hover:opacity-90"
-                                style={{ background: "linear-gradient(135deg, #10b981, #059669)" }}
-                              >
-                                Log Payment
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => navigate("/pro/pricing")}
-                                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold border border-amber-500/30 text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 transition-all"
-                              >
-                                <ProBadge /> Log Payment
-                              </button>
-                            )}
+                            <button
+                              onClick={() => {
+                                const amt = Number(payAmount[debt.id]);
+                                if (!amt || amt <= 0) { toast.error("Enter a payment amount"); return; }
+                                makePayment(debt.id, amt);
+                                setPayAmount((p) => ({ ...p, [debt.id]: "" }));
+                                toast.success(`${currency}${amt} payment logged on ${debt.name}`);
+                              }}
+                              className="px-4 py-2 rounded-lg text-sm font-bold text-black transition-all hover:opacity-90"
+                              style={{ background: "linear-gradient(135deg, #10b981, #059669)" }}
+                            >
+                              Log Payment
+                            </button>
                           </div>
                         )}
                       </div>
                     );
                   })}
                  </div>
-                {/* 3-debt limit upsell for free users */}
-                {!effectivelyPro && sortedDebts.length >= 3 && (
-                  <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-5 flex items-center justify-between gap-4">
-                    <div>
-                      <div className="text-sm font-bold text-amber-400 mb-1">You've reached the free limit (3 debts)</div>
-                      <div className="text-xs text-slate-400">Upgrade to Pro to track unlimited debts, log payments, and get your debt-free date.</div>
-                    </div>
-                    <button
-                      onClick={() => navigate("/pro/pricing")}
-                      className="shrink-0 px-4 py-2 rounded-lg text-xs font-bold text-black transition-all hover:opacity-90 whitespace-nowrap"
-                      style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)" }}
-                    >
-                      Unlock Pro
-                    </button>
-                  </div>
-                )}
+
               </>
             )}
           </div>
@@ -1040,7 +949,6 @@ export default function Dashboard() {
 
         {/* ── GAME PLAN TAB ─────────────────────────────────────────────────── */}
         {activeTab === "plan" && (
-          <ProGate isPro={effectivelyPro} featureName="Game Plan — Your Month-by-Month Roadmap" description="Get a personalized, step-by-step action plan: when to attack each debt, how to allocate every dollar, and exactly when you'll be debt-free.">
           <div className="space-y-6">
             {/* The 3 Rules */}
             <div className={card}>
@@ -1122,7 +1030,6 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
-          </ProGate>
         )}
 
       </main>
@@ -1158,7 +1065,7 @@ export default function Dashboard() {
             <PoweredByBadge />
             <p className="text-xs text-slate-600">All data is stored locally on your device. Nothing is sent to any server.</p>
           </div>
-          {/* Bottom row: support + subscription management */}
+          {/* Bottom row: support */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-x-6 gap-y-2 border-t border-white/5 pt-4">
             <a
               href="mailto:streetecon@proton.me"
@@ -1167,93 +1074,11 @@ export default function Dashboard() {
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
               Contact Support
             </a>
-            {effectivelyPro && !state.isDemo && (
-              <>
-                <span className="hidden sm:inline text-white/10">|</span>
-                <button
-                  onClick={() => setShowCancelConfirm(true)}
-                  className="text-xs text-slate-500 hover:text-rose-400 transition-colors flex items-center gap-1.5"
-                >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
-                  Cancel Subscription
-                </button>
-              </>
-            )}
-            {!effectivelyPro && !state.isDemo && (
-              <>
-                <span className="hidden sm:inline text-white/10">|</span>
-                <a
-                  href="mailto:streetecon@proton.me?subject=Subscription%20Help"
-                  className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
-                >
-                  Subscription Help
-                </a>
-              </>
-            )}
           </div>
         </div>
       </footer>
 
-      {/* CANCEL SUBSCRIPTION CONFIRM */}
-      {showCancelConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}>
-          <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#0d1117] p-6 text-center">
-            <div className="w-12 h-12 rounded-full bg-rose-500/15 flex items-center justify-center mx-auto mb-4">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
-            </div>
-            <h3 className="font-bold text-white mb-2" style={{ fontFamily: "'Syne', sans-serif" }}>Cancel Pro Subscription?</h3>
-            <p className="text-sm text-slate-400 mb-2">Your Pro subscription will be cancelled immediately. Your plan data stays saved.</p>
-            {subscriptionStatus?.stripeSubscriptionId ? (
-              <p className="text-xs text-slate-500 mb-6">
-                Need to update payment details instead?{" "}
-                <button
-                  onClick={async () => {
-                    try {
-                      const { url } = await getPortalUrlMutation.mutateAsync({ returnUrl: window.location.href });
-                      window.open(url, "_blank");
-                    } catch {
-                      toast.error("Could not open billing portal. Please email streetecon@proton.me");
-                    }
-                  }}
-                  className="text-emerald-400 hover:underline"
-                >
-                  Manage billing
-                </button>.
-              </p>
-            ) : (
-              <p className="text-xs text-slate-500 mb-6">
-                To cancel your billing, please also cancel in your Stripe account or email us at{" "}
-                <a href="mailto:streetecon@proton.me" className="text-emerald-400 hover:underline">streetecon@proton.me</a>.
-              </p>
-            )}
-            <div className="flex gap-3">
-              <button onClick={() => setShowCancelConfirm(false)} className="flex-1 py-2.5 rounded-lg border border-white/10 text-sm text-slate-400 hover:text-white transition-all">Keep Pro</button>
-              <button
-                disabled={cancelSubscriptionMutation.isPending}
-                onClick={async () => {
-                  if (subscriptionStatus?.stripeSubscriptionId) {
-                    try {
-                      await cancelSubscriptionMutation.mutateAsync();
-                      deactivatePro();
-                      setShowCancelConfirm(false);
-                      toast.success("Subscription cancelled. Pro access has been removed.");
-                    } catch {
-                      toast.error("Could not cancel automatically. Please email streetecon@proton.me");
-                    }
-                  } else {
-                    deactivatePro();
-                    setShowCancelConfirm(false);
-                    toast.success("Pro removed from this device. Please cancel billing in your Stripe account.");
-                  }
-                }}
-                className="flex-1 py-2.5 rounded-lg text-sm font-bold text-white bg-rose-500 hover:bg-rose-600 disabled:opacity-50 transition-all"
-              >
-                {cancelSubscriptionMutation.isPending ? "Cancelling..." : "Cancel Subscription"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+
 
       {/* RESET CONFIRM */}
       {showReset && (
