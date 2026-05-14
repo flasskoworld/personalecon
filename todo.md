@@ -118,3 +118,9 @@
 
 ## Bug Fixes
 - [x] Fix errors when opening Savings & Investments tab in dashboard (duplicate React key when savings goal = milestone value)
+
+## Subscription Management & Support
+- [x] Audit Stripe checkout success_url and Pro unlock flow end-to-end (confirmed correct)
+- [x] Add cancel subscription button/flow for Pro users (footer button + confirmation modal)
+- [x] Add contact support link (streetecon@proton.me) in dashboard footer
+- [x] Ensure cancel subscription clears Pro status locally and shows downgrade message (deactivatePro + toast)

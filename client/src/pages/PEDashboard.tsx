@@ -195,7 +195,7 @@ function InvestEditModal({ inv, onSave, onClose, currency }: {
 export default function Dashboard() {
   const [, navigate] = useLocation();
   const { state, computed, makePayment, updateDebt, addSavings, updateInvestment, addInvestment, removeInvestment, setStrategy, resetAll, updatePrimaryIncome, addAdditionalIncome, removeAdditionalIncome } = useStore();
-  const { isPro } = useProStatus();
+  const { isPro, deactivatePro } = useProStatus();
   const effectivelyPro = isPro || state.isDemo; // Demo mode unlocks all Pro features for preview
   const [activeTab, setActiveTab] = useState<"overview" | "debt" | "budget" | "savings" | "plan">("overview");
   const [editingDebt, setEditingDebt] = useState<Debt | null>(null);
@@ -203,6 +203,7 @@ export default function Dashboard() {
   const [payAmount, setPayAmount] = useState<Record<string, string>>({});
   const [saveAmount, setSaveAmount] = useState("");
   const [showReset, setShowReset] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   // Income editor state (must be declared before early return to follow rules of hooks)
   const [showIncomeEditor, setShowIncomeEditor] = useState(false);
   const [incomeEditVal, setIncomeEditVal] = useState(state.profile?.income?.toString() || "");
@@ -1124,16 +1125,79 @@ export default function Dashboard() {
       )}
 
       {/* BOTTOM FOOTER BAR */}
-      <footer className="border-t border-white/6 py-4 mt-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded-md flex items-center justify-center text-xs font-black" style={{ background: "linear-gradient(135deg, #10b981, #059669)", color: "#fff" }}>£</div>
-            <span className="text-xs font-semibold text-slate-500" style={{ fontFamily: "'Syne', sans-serif" }}>Personal Economy</span>
+      <footer className="border-t border-white/6 py-6 mt-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col gap-4">
+          {/* Top row: branding + powered by + privacy note */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 rounded-md flex items-center justify-center text-xs font-black" style={{ background: "linear-gradient(135deg, #10b981, #059669)", color: "#fff" }}>£</div>
+              <span className="text-xs font-semibold text-slate-500" style={{ fontFamily: "'Syne', sans-serif" }}>Personal Economy</span>
+            </div>
+            <PoweredByBadge />
+            <p className="text-xs text-slate-600">All data is stored locally on your device. Nothing is sent to any server.</p>
           </div>
-          <PoweredByBadge />
-          <p className="text-xs text-slate-600">All data is stored locally on your device. Nothing is sent to any server.</p>
+          {/* Bottom row: support + subscription management */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-x-6 gap-y-2 border-t border-white/5 pt-4">
+            <a
+              href="mailto:streetecon@proton.me"
+              className="text-xs text-slate-500 hover:text-slate-300 transition-colors flex items-center gap-1.5"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+              Contact Support
+            </a>
+            {effectivelyPro && !state.isDemo && (
+              <>
+                <span className="hidden sm:inline text-white/10">|</span>
+                <button
+                  onClick={() => setShowCancelConfirm(true)}
+                  className="text-xs text-slate-500 hover:text-rose-400 transition-colors flex items-center gap-1.5"
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+                  Cancel Subscription
+                </button>
+              </>
+            )}
+            {!effectivelyPro && !state.isDemo && (
+              <>
+                <span className="hidden sm:inline text-white/10">|</span>
+                <a
+                  href="mailto:streetecon@proton.me?subject=Subscription%20Help"
+                  className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
+                >
+                  Subscription Help
+                </a>
+              </>
+            )}
+          </div>
         </div>
       </footer>
+
+      {/* CANCEL SUBSCRIPTION CONFIRM */}
+      {showCancelConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}>
+          <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#0d1117] p-6 text-center">
+            <div className="w-12 h-12 rounded-full bg-rose-500/15 flex items-center justify-center mx-auto mb-4">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
+            </div>
+            <h3 className="font-bold text-white mb-2" style={{ fontFamily: "'Syne', sans-serif" }}>Cancel Pro Subscription?</h3>
+            <p className="text-sm text-slate-400 mb-2">Your Pro features will be removed from this device. Your plan data stays saved.</p>
+            <p className="text-xs text-slate-500 mb-6">To cancel your billing, please also cancel in your Stripe account or email us at <a href="mailto:streetecon@proton.me" className="text-emerald-400 hover:underline">streetecon@proton.me</a>.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setShowCancelConfirm(false)} className="flex-1 py-2.5 rounded-lg border border-white/10 text-sm text-slate-400 hover:text-white transition-all">Keep Pro</button>
+              <button
+                onClick={() => {
+                  deactivatePro();
+                  setShowCancelConfirm(false);
+                  toast.success("Pro subscription removed from this device.");
+                }}
+                className="flex-1 py-2.5 rounded-lg text-sm font-bold text-white bg-rose-500 hover:bg-rose-600 transition-all"
+              >
+                Remove Pro
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* RESET CONFIRM */}
       {showReset && (
