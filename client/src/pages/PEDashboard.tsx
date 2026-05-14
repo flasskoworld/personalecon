@@ -8,7 +8,9 @@ import { useLocation } from "wouter";
 import { useStore } from "@/hooks/usePEStore";
 import {
   sortDebtsByStrategy, simulatePayoff, getDebtFreeDate, formatCurrency,
-  buildSavingsProjection, monthlyInterestCost, generateInvestmentId, getInvestColor, Debt, Investment,
+  buildSavingsProjection, monthlyInterestCost, generateInvestmentId, getInvestColor,
+  generateDebtId, generateExpenseId, getDebtColor,
+  Debt, Investment, Expense,
 } from "@/lib/peStore";
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
@@ -18,6 +20,7 @@ import {
   TrendingUp, TrendingDown, AlertTriangle, CheckCircle2, Target,
   Flame, Snowflake, Edit3, X, RotateCcw, ChevronRight, DollarSign,
   BarChart3, Shield, Layers, ArrowUpRight, ArrowDownRight, Plus, Trash2,
+  Zap, BookOpen, Info, Lightbulb,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -189,14 +192,156 @@ function InvestEditModal({ inv, onSave, onClose, currency }: {
   );
 }
 
+// ── Add Debt Modal ────────────────────────────────────────────────────────────
+function AddDebtModal({ onSave, onClose, currency, debtCount }: {
+  onSave: (debt: Debt) => void; onClose: () => void; currency: string; debtCount: number;
+}) {
+  const [name, setName] = useState("");
+  const [balance, setBalance] = useState("");
+  const [apr, setApr] = useState("");
+  const [minPay, setMinPay] = useState("");
+
+  const save = () => {
+    if (!name.trim()) { toast.error("Enter a debt name"); return; }
+    if (!balance || Number(balance) <= 0) { toast.error("Enter a valid balance"); return; }
+    const debt: Debt = {
+      id: generateDebtId(),
+      name: name.trim(),
+      balance: Number(balance),
+      originalBalance: Number(balance),
+      apr: Number(apr) || 0,
+      minimumPayment: Number(minPay) || 0,
+      paid: 0,
+      color: getDebtColor(debtCount),
+    };
+    onSave(debt);
+    onClose();
+    toast.success(`${name} added to your debt tracker`);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}>
+      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0d1117] p-6">
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="font-bold text-white" style={{ fontFamily: "'Syne', sans-serif" }}>Add New Debt</h3>
+          <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors"><X size={18} /></button>
+        </div>
+        <div className="space-y-4">
+          <div><label className={labelClass}>Debt Name</label><input className={inputClass} placeholder="e.g. Chase Credit Card" value={name} onChange={(e) => setName(e.target.value)} /></div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><label className={labelClass}>Current Balance</label>
+              <div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">{currency}</span>
+                <input className={inputClass + " pl-6"} type="number" placeholder="0" value={balance} onChange={(e) => setBalance(e.target.value)} /></div></div>
+            <div><label className={labelClass}>APR %</label>
+              <div className="relative"><input className={inputClass + " pr-6"} type="number" placeholder="0" value={apr} onChange={(e) => setApr(e.target.value)} />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">%</span></div></div>
+            <div className="col-span-2"><label className={labelClass}>Minimum Monthly Payment</label>
+              <div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">{currency}</span>
+                <input className={inputClass + " pl-6"} type="number" placeholder="0" value={minPay} onChange={(e) => setMinPay(e.target.value)} /></div></div>
+          </div>
+          {Number(balance) > 0 && Number(apr) > 0 && (
+            <div className="rounded-xl bg-rose-500/8 border border-rose-500/15 p-3 text-xs text-rose-300">
+              Monthly interest: <strong>{currency}{((Number(balance) * Number(apr) / 100) / 12).toFixed(2)}</strong>
+            </div>
+          )}
+        </div>
+        <div className="flex gap-3 mt-6">
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-lg border border-white/10 text-sm text-slate-400 hover:text-white transition-all">Cancel</button>
+          <button onClick={save} className="flex-1 py-2.5 rounded-lg text-sm font-bold text-black transition-all hover:opacity-90" style={{ background: "linear-gradient(135deg, #10b981, #059669)" }}>Add Debt</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Add Expense Modal ──────────────────────────────────────────────────────────
+const EXPENSE_CATEGORIES = [
+  { value: "housing", label: "Housing" },
+  { value: "transport", label: "Transport" },
+  { value: "food", label: "Food" },
+  { value: "insurance", label: "Insurance" },
+  { value: "subscriptions", label: "Subscriptions" },
+  { value: "utilities", label: "Utilities" },
+  { value: "health", label: "Health" },
+  { value: "other", label: "Other" },
+];
+
+function AddExpenseModal({ onSave, onClose, currency }: {
+  onSave: (expense: Expense) => void; onClose: () => void; currency: string;
+}) {
+  const [label, setLabel] = useState("");
+  const [amount, setAmount] = useState("");
+  const [category, setCategory] = useState<Expense["category"]>("other");
+  const [isEssential, setIsEssential] = useState(false);
+
+  const save = () => {
+    if (!label.trim()) { toast.error("Enter an expense name"); return; }
+    if (!amount || Number(amount) <= 0) { toast.error("Enter a valid amount"); return; }
+    const expense: Expense = {
+      id: generateExpenseId(),
+      label: label.trim(),
+      amount: Number(amount),
+      category,
+      isEssential,
+    };
+    onSave(expense);
+    onClose();
+    toast.success(`${label} added to your budget`);
+  };
+
+  const selectClass = "w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-all";
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}>
+      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0d1117] p-6">
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="font-bold text-white" style={{ fontFamily: "'Syne', sans-serif" }}>Add New Expense</h3>
+          <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors"><X size={18} /></button>
+        </div>
+        <div className="space-y-4">
+          <div><label className={labelClass}>Expense Name</label><input className={inputClass} placeholder="e.g. Netflix, Gym, Rent" value={label} onChange={(e) => setLabel(e.target.value)} /></div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><label className={labelClass}>Monthly Amount</label>
+              <div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">{currency}</span>
+                <input className={inputClass + " pl-6"} type="number" placeholder="0" value={amount} onChange={(e) => setAmount(e.target.value)} /></div></div>
+            <div><label className={labelClass}>Category</label>
+              <select className={selectClass} value={category} onChange={(e) => setCategory(e.target.value as Expense["category"])}>
+                {EXPENSE_CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+              </select></div>
+          </div>
+          <div className="flex items-center gap-3 rounded-xl border border-white/8 bg-white/3 p-3">
+            <button
+              type="button"
+              onClick={() => setIsEssential((v) => !v)}
+              className={`w-10 h-6 rounded-full transition-all flex items-center ${isEssential ? "bg-amber-500" : "bg-white/10"}`}
+            >
+              <span className={`w-4 h-4 rounded-full bg-white transition-all mx-1 ${isEssential ? "translate-x-4" : "translate-x-0"}`} />
+            </button>
+            <div>
+              <div className="text-xs font-semibold text-white">{isEssential ? "Essential (fixed)" : "Non-essential (cuttable)"}</div>
+              <div className="text-xs text-slate-500">{isEssential ? "Rent, utilities, insurance" : "Subscriptions, dining, entertainment"}</div>
+            </div>
+          </div>
+        </div>
+        <div className="flex gap-3 mt-6">
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-lg border border-white/10 text-sm text-slate-400 hover:text-white transition-all">Cancel</button>
+          <button onClick={save} className="flex-1 py-2.5 rounded-lg text-sm font-bold text-black transition-all hover:opacity-90" style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)" }}>Add Expense</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Main Dashboard ─────────────────────────────────────────────────────────────
 export default function Dashboard() {
   const [, navigate] = useLocation();
-  const { state, computed, makePayment, updateDebt, addSavings, updateInvestment, addInvestment, removeInvestment, setStrategy, resetAll, updatePrimaryIncome, addAdditionalIncome, removeAdditionalIncome } = useStore();
+  const { state, computed, makePayment, updateDebt, addDebt, removeDebt, addExpense, removeExpense, updateExpense, addSavings, updateInvestment, addInvestment, removeInvestment, setStrategy, resetAll, updatePrimaryIncome, addAdditionalIncome, removeAdditionalIncome } = useStore();
   // All features are free — no Pro gating
   const [activeTab, setActiveTab] = useState<"overview" | "debt" | "budget" | "savings" | "plan">("overview");
   const [editingDebt, setEditingDebt] = useState<Debt | null>(null);
   const [editingInvest, setEditingInvest] = useState<Investment | null>(null);
+  const [showAddDebt, setShowAddDebt] = useState(false);
+  const [showAddExpense, setShowAddExpense] = useState(false);
   const [payAmount, setPayAmount] = useState<Record<string, string>>({});
   const [saveAmount, setSaveAmount] = useState("");
   const [showReset, setShowReset] = useState(false);
@@ -562,18 +707,33 @@ export default function Dashboard() {
               </ResponsiveContainer>
             </div>
           </div>
-        )}
-
-        {/* ── DEBT TRACKER TAB ─────────────────────────────────────────────── */}
+        )}        {/* ── DEBT TRACKER TAB ────────────────────────────────────────────────────────── */}
         {activeTab === "debt" && (
           <div className="space-y-6">
+            {/* Tab header with Add Debt button */}
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-bold text-white" style={{ fontFamily: "'Syne', sans-serif" }}>Debt Tracker</h2>
+              <button
+                onClick={() => setShowAddDebt(true)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold text-black transition-all hover:opacity-90"
+                style={{ background: "linear-gradient(135deg, #10b981, #059669)" }}
+              >
+                <Plus size={14} /> Add Debt
+              </button>
+            </div>
             {state.debts.length === 0 ? (
-              <div className="text-center py-20">
+              <div className="text-center py-16">
                 <CheckCircle2 size={48} className="text-emerald-400 mx-auto mb-4" />
                 <h3 className="text-xl font-bold text-white mb-2" style={{ fontFamily: "'Syne', sans-serif" }}>No debts tracked</h3>
-                <p className="text-slate-400 text-sm">You're either debt-free or haven't added any debts yet.</p>
-              </div>
-            ) : (
+                <p className="text-slate-400 text-sm mb-6">You're either debt-free or haven't added any debts yet.</p>
+                <button
+                  onClick={() => setShowAddDebt(true)}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-black transition-all hover:opacity-90"
+                  style={{ background: "linear-gradient(135deg, #10b981, #059669)" }}
+                >
+                  <Plus size={15} /> Add Your First Debt
+                </button>
+              </div>    ) : (
               <>
                 {/* Strategy toggle */}
                 <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
@@ -652,6 +812,13 @@ export default function Dashboard() {
                             >
                               <Edit3 size={13} />
                             </button>
+                            <button
+                              onClick={() => { removeDebt(debt.id); toast.success(`${debt.name} removed`); }}
+                              className="text-slate-600 hover:text-rose-400 p-1.5 rounded-lg hover:bg-rose-500/10 transition-all"
+                              title="Remove debt"
+                            >
+                              <Trash2 size={13} />
+                            </button>
                           </div>
                         </div>
 
@@ -706,15 +873,25 @@ export default function Dashboard() {
                   })}
                  </div>
 
-              </>
+                 </>
             )}
           </div>
         )}
-        {/* ── BUDGET TAB ───────────────────────────────────────────────────── */}
+        {/* ── BUDGET TAB ────────────────────────────────────────────────────────── */}
         {activeTab === "budget" && (
           <div className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
-              {/* Pie chart */}
+            {/* Tab header with Add Expense button */}
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-bold text-white" style={{ fontFamily: "'Syne', sans-serif" }}>Budget</h2>
+              <button
+                onClick={() => setShowAddExpense(true)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold text-black transition-all hover:opacity-90"
+                style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)" }}
+              >
+                <Plus size={14} /> Add Expense
+              </button>
+            </div>
+            <div className="grid md:grid-cols-2 gap-4 sm:gap-6">              {/* Pie chart */}
               <div className={card}>
                 <h3 className="text-sm font-bold text-white mb-4" style={{ fontFamily: "'Syne', sans-serif" }}>Spending Breakdown</h3>
                 <ResponsiveContainer width="100%" height={200}>
@@ -767,9 +944,25 @@ export default function Dashboard() {
                         <div className="text-xs text-slate-500 capitalize">{e.category}</div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
                       {!e.isEssential && <span className="text-xs text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded">cuttable</span>}
                       <span className="text-sm font-mono font-semibold text-white">{currency}{e.amount.toLocaleString()}</span>
+                      <button
+                        onClick={() => {
+                          const newAmount = prompt(`Edit amount for ${e.label}:`, String(e.amount));
+                          if (newAmount !== null && Number(newAmount) > 0) {
+                            updateExpense(e.id, { amount: Number(newAmount) });
+                            toast.success(`${e.label} updated`);
+                          }
+                        }}
+                        className="text-slate-600 hover:text-white p-1 rounded hover:bg-white/5 transition-all"
+                        title="Edit amount"
+                      ><Edit3 size={12} /></button>
+                      <button
+                        onClick={() => { removeExpense(e.id); toast.success(`${e.label} removed`); }}
+                        className="text-slate-600 hover:text-rose-400 p-1 rounded hover:bg-rose-500/10 transition-all"
+                        title="Remove expense"
+                      ><Trash2 size={12} /></button>
                     </div>
                   </div>
                 ))}
@@ -948,42 +1141,193 @@ export default function Dashboard() {
         )}
 
         {/* ── GAME PLAN TAB ─────────────────────────────────────────────────── */}
-        {activeTab === "plan" && (
+        {/* ── GAME PLAN TAB ─────────────────────────────────────────────────── */}
+        {activeTab === "plan" && (() => {
+          // ── Personalised Game Plan computations ───────────────────────────────
+          const nonEssentialExpenses = state.expenses.filter((e) => !e.isEssential);
+          const nonEssentialTotal = nonEssentialExpenses.reduce((s, e) => s + e.amount, 0);
+          const zeroAprDebts = state.debts.filter((d) => d.apr === 0 && d.balance > 0);
+          const highAprDebt = state.debts.filter((d) => d.balance > 0).sort((a, b) => b.apr - a.apr)[0];
+          const debtToIncomeRatio = totalMonthlyIncome > 0 ? (totalDebt / (totalMonthlyIncome * 12)) * 100 : 0;
+          const savingsRate = totalMonthlyIncome > 0 ? (savingsBudget / totalMonthlyIncome) * 100 : 0;
+          const emergencyFundTarget = totalExpenses * 3;
+          const hasEmergencyFund = state.totalSaved >= emergencyFundTarget;
+          const monthsToEmergencyFund = savingsBudget > 0 ? Math.ceil((emergencyFundTarget - state.totalSaved) / savingsBudget) : 0;
+          const totalInvestmentMonthly = state.investments.reduce((s, i) => s + i.monthlyContribution, 0);
+          const isOverspending = monthlyLeftover < 0;
+          const overspendAmount = Math.abs(monthlyLeftover);
+
+          type Priority = "critical" | "high" | "medium" | "low";
+          const prioritySteps: { icon: React.ReactNode; title: string; desc: string; color: string; priority: Priority; badge?: string }[] = [];
+
+          if (isOverspending) {
+            prioritySteps.push({
+              icon: <AlertTriangle size={16} />,
+              title: `Stop the bleed — you're overspending by ${currency}${Math.round(overspendAmount).toLocaleString()}/mo`,
+              desc: `Your expenses exceed your income by ${currency}${Math.round(overspendAmount).toLocaleString()} every month. Fix this before anything else. Cut ${nonEssentialTotal > 0 ? `non-essentials (${currency}${Math.round(nonEssentialTotal).toLocaleString()}/mo available)` : "expenses"} or increase income.`,
+              color: "#ef4444", priority: "critical", badge: "DO FIRST",
+            });
+          }
+
+          if (!hasEmergencyFund) {
+            prioritySteps.push({
+              icon: <Shield size={16} />,
+              title: `Build a ${currency}${Math.round(emergencyFundTarget).toLocaleString()} emergency fund (3 months of expenses)`,
+              desc: state.totalSaved > 0
+                ? `You have ${currency}${Math.round(state.totalSaved).toLocaleString()} saved. At ${currency}${Math.round(savingsBudget).toLocaleString()}/mo you'll hit your target in ~${monthsToEmergencyFund} months.`
+                : `No emergency fund means any unexpected expense pushes you into more debt. Save ${currency}${Math.round(savingsBudget).toLocaleString()}/mo and reach this in ~${monthsToEmergencyFund} months.`,
+              color: "#f59e0b", priority: isOverspending ? "high" : "critical", badge: isOverspending ? undefined : "DO FIRST",
+            });
+          }
+
+          if (zeroAprDebts.length > 0) {
+            prioritySteps.push({
+              icon: <Zap size={16} />,
+              title: `Wipe your 0% APR debts — free wins`,
+              desc: `${zeroAprDebts.map((d) => `${d.name} (${currency}${Math.round(d.balance).toLocaleString()})`).join(", ")} carry no interest. Pay these off first for quick wins at zero cost.`,
+              color: "#10b981", priority: "high",
+            });
+          }
+
+          if (highAprDebt && highAprDebt.apr > 0) {
+            const monthlyInterestCostHigh = (highAprDebt.balance * highAprDebt.apr) / 100 / 12;
+            prioritySteps.push({
+              icon: <Flame size={16} />,
+              title: `Attack ${highAprDebt.name} — ${highAprDebt.apr}% APR costs you ${currency}${Math.round(monthlyInterestCostHigh).toLocaleString()}/mo`,
+              desc: state.strategy === "avalanche"
+                ? `You're on Avalanche — correct. After minimums on everything else, throw every extra dollar at ${highAprDebt.name}. Every ${currency}100 extra saves ~${currency}${Math.round((highAprDebt.apr / 100) * 100).toLocaleString()} per year.`
+                : `Switch to Avalanche and target ${highAprDebt.name} first. It's your most expensive debt and directly reduces your ${currency}${Math.round(totalMonthlyInterest).toLocaleString()}/mo interest bill.`,
+              color: "#ef4444", priority: "high",
+            });
+          }
+
+          if (nonEssentialExpenses.length > 0 && nonEssentialTotal > 50) {
+            prioritySteps.push({
+              icon: <Trash2 size={16} />,
+              title: `Cut ${currency}${Math.round(nonEssentialTotal).toLocaleString()}/mo in non-essential spending`,
+              desc: `You have ${nonEssentialExpenses.length} non-essential expense${nonEssentialExpenses.length > 1 ? "s" : ""}: ${nonEssentialExpenses.map((e) => e.label).join(", ")}. Redirecting half (${currency}${Math.round(nonEssentialTotal / 2).toLocaleString()}/mo) to debt saves ${currency}${Math.round((nonEssentialTotal / 2) * 12).toLocaleString()} in a year.`,
+              color: "#f59e0b", priority: "medium",
+            });
+          }
+
+          if (!isOverspending && savingsBudget > 0) {
+            prioritySteps.push({
+              icon: <TrendingUp size={16} />,
+              title: `Automate ${currency}${Math.round(savingsBudget).toLocaleString()}/mo to savings on payday`,
+              desc: `You have ${currency}${Math.round(monthlyLeftover).toLocaleString()}/mo left after expenses. Set up an automatic transfer of ${currency}${Math.round(savingsBudget).toLocaleString()} to savings the same day you get paid — before you can spend it. Savings rate: ${Math.round(savingsRate)}%.`,
+              color: "#6366f1", priority: "medium",
+            });
+          }
+
+          if (totalDebt === 0 && monthlyLeftover > 200) {
+            prioritySteps.push({
+              icon: <ArrowUpRight size={16} />,
+              title: `You're debt-free — invest ${currency}${Math.round(monthlyLeftover * 0.5).toLocaleString()}/mo`,
+              desc: totalInvestmentMonthly > 0
+                ? `You're already contributing ${currency}${Math.round(totalInvestmentMonthly).toLocaleString()}/mo — consider increasing it. Your ${currency}${Math.round(monthlyLeftover).toLocaleString()}/mo surplus can compound significantly over time.`
+                : `Start with index funds or a tax-advantaged account (ISA/401k/IRA). Your ${currency}${Math.round(monthlyLeftover).toLocaleString()}/mo surplus invested at 7% avg return grows to ${currency}${Math.round(monthlyLeftover * 0.5 * 12 * 10 * 1.07).toLocaleString()} in 10 years.`,
+              color: "#10b981", priority: "medium",
+            });
+          }
+
+          prioritySteps.push({
+            icon: <DollarSign size={16} />,
+            title: "Found money rule — windfalls go to the plan",
+            desc: `Tax refund, overtime, selling something — 100% of unexpected income goes to ${totalDebt > 0 ? `debt (${currency}${Math.round(totalDebt).toLocaleString()} remaining)` : "savings or investments"}. Don't let it disappear into lifestyle.`,
+            color: "#6366f1", priority: "low",
+          });
+
+          const priorityColors: Record<Priority, string> = { critical: "#ef4444", high: "#f59e0b", medium: "#6366f1", low: "#64748b" };
+          const priorityLabels: Record<Priority, string> = { critical: "CRITICAL", high: "HIGH", medium: "MEDIUM", low: "LOW" };
+
+          const score = Math.max(0, Math.min(100, Math.round(
+            (isOverspending ? 0 : 25) +
+            (hasEmergencyFund ? 20 : Math.min(20, (state.totalSaved / Math.max(1, emergencyFundTarget)) * 20)) +
+            (totalDebt === 0 ? 25 : Math.max(0, 25 - (debtToIncomeRatio / 4))) +
+            (savingsRate >= 20 ? 20 : (savingsRate / 20) * 20) +
+            (totalInvestmentMonthly > 0 ? 10 : 0)
+          )));
+          const scoreColor = score >= 70 ? "#10b981" : score >= 40 ? "#f59e0b" : "#ef4444";
+          const scoreLabel = score >= 70 ? "Strong" : score >= 40 ? "Building" : "Needs Work";
+
+          return (
           <div className="space-y-6">
-            {/* The 3 Rules */}
+            {/* Financial Health Score */}
             <div className={card}>
-              <h3 className="text-sm font-bold text-white mb-4" style={{ fontFamily: "'Syne', sans-serif" }}>The 3 Rules</h3>
-              <div className="space-y-3">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-bold text-white" style={{ fontFamily: "'Syne', sans-serif" }}>Your Financial Health Score</h3>
+                <span className="text-xs font-mono px-2 py-0.5 rounded" style={{ background: `${scoreColor}20`, color: scoreColor }}>{scoreLabel}</span>
+              </div>
+              <div className="flex items-end gap-4 mb-4">
+                <div className="text-5xl font-black" style={{ fontFamily: "'Syne', sans-serif", color: scoreColor }}>{score}</div>
+                <div className="text-slate-500 text-sm mb-1">/100</div>
+              </div>
+              <div className="w-full bg-white/5 rounded-full h-2 mb-4">
+                <div className="h-2 rounded-full transition-all" style={{ width: `${score}%`, background: scoreColor }} />
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                 {[
-                  { num: "01", title: "Pay yourself first", desc: `Every payday, move ${currency}${Math.round(savingsBudget / 2).toLocaleString()} to savings before spending anything. Non-negotiable.`, color: "#10b981" },
-                  { num: "02", title: "Attack the highest APR debt", desc: `After minimums, throw every extra dollar at your highest-rate debt. ${state.strategy === "avalanche" ? "You're on Avalanche — this is the mathematically correct move." : "Consider switching to Avalanche to save on interest."}`, color: "#f59e0b" },
-                  { num: "03", title: "Found money goes to the plan", desc: "Tax refund, overtime, selling something — 100% of unexpected income goes to debt or savings. Don't let it disappear.", color: "#6366f1" },
-                ].map((r) => (
-                  <div key={r.num} className="flex gap-4 rounded-xl border border-white/8 bg-white/3 p-4">
-                    <div className="text-2xl font-black shrink-0" style={{ color: r.color, fontFamily: "'Syne', sans-serif" }}>{r.num}</div>
-                    <div>
-                      <div className="font-bold text-white text-sm mb-1" style={{ fontFamily: "'Syne', sans-serif" }}>{r.title}</div>
-                      <div className="text-xs text-slate-400 leading-relaxed">{r.desc}</div>
-                    </div>
+                  { label: "Cash Flow", ok: !isOverspending, val: isOverspending ? `-${currency}${Math.round(overspendAmount)}` : `+${currency}${Math.round(monthlyLeftover)}` },
+                  { label: "Emergency Fund", ok: hasEmergencyFund, val: hasEmergencyFund ? "3mo ✓" : `${Math.round((state.totalSaved / Math.max(1, emergencyFundTarget)) * 100)}%` },
+                  { label: "Debt Ratio", ok: debtToIncomeRatio < 36, val: `${Math.round(debtToIncomeRatio)}%` },
+                  { label: "Savings Rate", ok: savingsRate >= 20, val: `${Math.round(savingsRate)}%` },
+                ].map((item) => (
+                  <div key={item.label} className="rounded-lg border border-white/8 bg-white/3 p-2">
+                    <div className="text-slate-500 mb-1">{item.label}</div>
+                    <div className="font-semibold" style={{ color: item.ok ? "#10b981" : "#f59e0b" }}>{item.val}</div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Month-by-month roadmap */}
-            {state.debts.length > 0 && (
+            {/* Personalised Priority Steps */}
+            <div className={card}>
+              <div className="flex items-center gap-2 mb-4">
+                <Lightbulb size={16} className="text-amber-400" />
+                <h3 className="text-sm font-bold text-white" style={{ fontFamily: "'Syne', sans-serif" }}>Your Personalised Action Plan</h3>
+              </div>
+              <p className="text-xs text-slate-500 mb-4">Ranked by priority based on your actual numbers — not generic advice.</p>
+              <div className="space-y-3">
+                {prioritySteps.map((step, i) => (
+                  <div key={i} className="flex gap-4 rounded-xl border border-white/8 bg-white/3 p-4">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: `${step.color}20`, color: step.color }}>
+                      {step.icon}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <div className="font-bold text-white text-sm" style={{ fontFamily: "'Syne', sans-serif" }}>{step.title}</div>
+                        {step.badge && (
+                          <span className="text-xs font-mono px-1.5 py-0.5 rounded shrink-0" style={{ background: `${step.color}20`, color: step.color }}>{step.badge}</span>
+                        )}
+                        <span className="text-xs font-mono px-1.5 py-0.5 rounded shrink-0" style={{ background: `${priorityColors[step.priority]}15`, color: priorityColors[step.priority] }}>{priorityLabels[step.priority]}</span>
+                      </div>
+                      <div className="text-xs text-slate-400 leading-relaxed">{step.desc}</div>
+                    </div>
+                    <div className="text-slate-600 text-sm font-bold shrink-0 mt-1">{String(i + 1).padStart(2, "0")}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Debt Payoff Roadmap */}
+            {state.debts.length > 0 && currentSim.payoffOrder.length > 0 && (
               <div className={card}>
-                <h3 className="text-sm font-bold text-white mb-4" style={{ fontFamily: "'Syne', sans-serif" }}>Debt Payoff Roadmap</h3>
+                <div className="flex items-center gap-2 mb-4">
+                  <Target size={16} className="text-emerald-400" />
+                  <h3 className="text-sm font-bold text-white" style={{ fontFamily: "'Syne', sans-serif" }}>Debt Payoff Roadmap</h3>
+                  <span className="ml-auto text-xs text-slate-500 font-mono">{state.strategy === "avalanche" ? "Avalanche" : "Snowball"} strategy</span>
+                </div>
                 <div className="space-y-3">
                   {currentSim.payoffOrder.map((item, i) => {
                     const d = new Date();
                     d.setMonth(d.getMonth() + item.month);
+                    const debt = state.debts.find((x) => x.name === item.name);
                     return (
                       <div key={item.name} className="flex items-center gap-4">
                         <div className="w-8 h-8 rounded-full border border-emerald-500/30 bg-emerald-500/10 flex items-center justify-center text-xs font-bold text-emerald-400 shrink-0">{i + 1}</div>
                         <div className="flex-1">
                           <div className="text-sm font-semibold text-white">{item.name} — <span className="text-emerald-400">PAID OFF</span></div>
-                          <div className="text-xs text-slate-500">{d.toLocaleDateString("en-US", { month: "long", year: "numeric" })} (month {item.month})</div>
+                          <div className="text-xs text-slate-500">{d.toLocaleDateString("en-US", { month: "long", year: "numeric" })} · month {item.month}{debt ? ` · ${debt.apr}% APR` : ""}</div>
                         </div>
                         <CheckCircle2 size={16} className="text-emerald-500/40 shrink-0" />
                       </div>
@@ -1000,37 +1344,42 @@ export default function Dashboard() {
               </div>
             )}
 
-            {/* Quick wins */}
-            <div className={card}>
-              <h3 className="text-sm font-bold text-white mb-4" style={{ fontFamily: "'Syne', sans-serif" }}>Quick Wins Right Now</h3>
-              <div className="space-y-2">
-                {[
-                  state.debts.filter((d) => d.apr === 0 && d.balance > 0).length > 0 && {
-                    text: `Wipe your 0% APR debts first (${state.debts.filter((d) => d.apr === 0 && d.balance > 0).map((d) => d.name).join(", ")}) — free wins with no interest cost`,
-                    color: "#10b981",
-                  },
-                  state.expenses.filter((e) => !e.isEssential).length > 0 && {
-                    text: `Cut non-essential subscriptions to free up ${currency}${Math.round(state.expenses.filter((e) => !e.isEssential).reduce((s, e) => s + e.amount, 0)).toLocaleString()}/mo`,
-                    color: "#f59e0b",
-                  },
-                  totalMonthlyInterest > 100 && {
-                    text: `You're paying ${currency}${Math.round(totalMonthlyInterest).toLocaleString()}/mo in interest — every extra dollar to debt directly reduces this`,
-                    color: "#ef4444",
-                  },
-                  monthlyLeftover > 500 && {
-                    text: `You have ${currency}${Math.round(monthlyLeftover).toLocaleString()}/mo available — automate ${currency}${Math.round(savingsBudget).toLocaleString()} to savings on payday so it never gets spent`,
-                    color: "#6366f1",
-                  },
-                ].filter(Boolean).map((w: any, i) => (
-                  <div key={i} className="flex gap-3 rounded-xl border border-white/8 bg-white/3 p-3">
-                    <div className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0" style={{ background: w.color }} />
-                    <div className="text-xs text-slate-300 leading-relaxed">{w.text}</div>
+            {/* Strategy Comparison */}
+            {state.debts.length > 0 && (
+              <div className={card}>
+                <div className="flex items-center gap-2 mb-4">
+                  <Info size={16} className="text-indigo-400" />
+                  <h3 className="text-sm font-bold text-white" style={{ fontFamily: "'Syne', sans-serif" }}>Snowball vs Avalanche — Which is Better for You?</h3>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  {[
+                    { label: "Snowball", sim: snowball, desc: "Pay smallest balance first. Faster wins, better motivation.", color: "#6366f1" },
+                    { label: "Avalanche", sim: avalanche, desc: "Pay highest APR first. Saves the most money mathematically.", color: "#10b981" },
+                  ].map((s) => (
+                    <div key={s.label} className={`rounded-xl border p-4 transition-all ${state.strategy === s.label.toLowerCase() ? "border-emerald-500/40 bg-emerald-500/5" : "border-white/8 bg-white/3"}`}>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="font-bold text-sm" style={{ color: s.color, fontFamily: "'Syne', sans-serif" }}>{s.label}</div>
+                        {state.strategy === s.label.toLowerCase() && <span className="text-xs text-emerald-400 font-mono">ACTIVE</span>}
+                      </div>
+                      <div className="text-xs text-slate-400 mb-3">{s.desc}</div>
+                      <div className="space-y-1 text-xs">
+                        <div className="flex justify-between"><span className="text-slate-500">Debt-free in</span><span className="text-white font-mono">{s.sim.months} months</span></div>
+                        <div className="flex justify-between"><span className="text-slate-500">Total interest</span><span className="text-rose-400 font-mono">{currency}{Math.round(s.sim.totalInterest).toLocaleString()}</span></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {avalanche.totalInterest < snowball.totalInterest && (
+                  <div className="mt-3 text-xs text-emerald-400 bg-emerald-500/5 border border-emerald-500/20 rounded-lg p-3">
+                    💡 Avalanche saves you {currency}{Math.round(snowball.totalInterest - avalanche.totalInterest).toLocaleString()} in interest vs Snowball. {state.strategy !== "avalanche" ? "Consider switching." : "You're on the right strategy."}
                   </div>
-                ))}
+                )}
               </div>
-            </div>
+            )}
           </div>
-        )}
+          );
+        })()}
+
 
       </main>
 
@@ -1050,6 +1399,23 @@ export default function Dashboard() {
           currency={currency}
           onSave={(fields) => updateInvestment(editingInvest.id, fields)}
           onClose={() => setEditingInvest(null)}
+        />
+      )}
+
+      {showAddDebt && (
+        <AddDebtModal
+          currency={currency}
+          debtCount={state.debts.length}
+          onSave={(debt) => addDebt(debt)}
+          onClose={() => setShowAddDebt(false)}
+        />
+      )}
+
+      {showAddExpense && (
+        <AddExpenseModal
+          currency={currency}
+          onSave={(expense) => addExpense(expense)}
+          onClose={() => setShowAddExpense(false)}
         />
       )}
 

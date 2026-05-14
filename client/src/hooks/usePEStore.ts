@@ -146,6 +146,33 @@ export function useStore() {
     }));
   }, [update]);
 
+  const addDebt = useCallback((debt: Debt) => {
+    update((prev) => ({ ...prev, debts: [...prev.debts, debt] }));
+  }, [update]);
+
+  const removeDebt = useCallback((debtId: string) => {
+    update((prev) => ({
+      ...prev,
+      debts: prev.debts.filter((d) => d.id !== debtId),
+      debtPayments: Object.fromEntries(Object.entries(prev.debtPayments).filter(([k]) => k !== debtId)),
+    }));
+  }, [update]);
+
+  const addExpense = useCallback((expense: Expense) => {
+    update((prev) => ({ ...prev, expenses: [...prev.expenses, expense] }));
+  }, [update]);
+
+  const removeExpense = useCallback((expenseId: string) => {
+    update((prev) => ({ ...prev, expenses: prev.expenses.filter((e) => e.id !== expenseId) }));
+  }, [update]);
+
+  const updateExpense = useCallback((expenseId: string, fields: Partial<Expense>) => {
+    update((prev) => ({
+      ...prev,
+      expenses: prev.expenses.map((e) => e.id === expenseId ? { ...e, ...fields } : e),
+    }));
+  }, [update]);
+
   // ── Savings Actions ────────────────────────────────────────────────────────
 
   const addSavings = useCallback((amount: number) => {
@@ -210,6 +237,11 @@ export function useStore() {
     updateAdditionalIncome,
     makePayment,
     updateDebt,
+    addDebt,
+    removeDebt,
+    addExpense,
+    removeExpense,
+    updateExpense,
     addSavings,
     updateInvestment,
     addInvestment,

@@ -36,7 +36,7 @@
 - [ ] Payday banner/modal reminder on payday
 - [ ] Monthly check-in log with notes
 - [x] Income update field for raises/new jobs (implemented as full income management section in Overview tab)
-- [ ] Multi-currency support in Pro
+- [ ] Multi-currency support (free feature — allow users to pick currency symbol during onboarding or in settings)
 
 ## Footer Branding
 - [x] Upload StreetEconomics logo to static assets
@@ -154,3 +154,11 @@
 - [x] Remove Stripe-related tRPC calls from PEDashboard (cancelSubscription, getPortalUrl, getSubscriptionStatus)
 - [x] Update PELanding to remove pricing/upgrade CTAs (was already clean)
 - [x] Remove useProStatus hook usage from dashboard (hook file kept but no longer imported in dashboard)
+
+## In-Dashboard Flexibility & Personalized Game Plan
+- [x] Add "Add Debt" button in Debt Tracker tab that opens an inline add-debt form (name, balance, APR, minimum payment, color)
+- [x] Add "Add Expense" button in Budget tab that opens an inline add-expense form (label, amount, essential toggle)
+- [x] Add "Remove Expense" button on each expense row in Budget tab
+- [x] Make Game Plan tab fully personalized: generate ranked action steps, priority warnings, and month-by-month milestones based on user's actual income, debts, expenses, savings, and strategy
+- [x] Game Plan: show a personalized "Your #1 Move Right Now" hero card based on worst financial signal (high APR debt, negative cashflow, no savings buffer, etc.) — shown as CRITICAL/DO FIRST badge on top priority step
+- [x] Game Plan: show dynamic monthly allocation recommendation (how much to savings vs debt vs buffer) based on actual leftover — shown in savings automation step
