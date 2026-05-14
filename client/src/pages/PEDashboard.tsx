@@ -20,9 +20,8 @@ import {
   TrendingUp, TrendingDown, AlertTriangle, CheckCircle2, Target,
   Flame, Snowflake, Edit3, X, RotateCcw, ChevronRight, DollarSign,
   BarChart3, Shield, Layers, ArrowUpRight, ArrowDownRight, Plus, Trash2,
-  Zap, BookOpen, Info, Lightbulb, Sun, Moon,
+  Zap, BookOpen, Info, Lightbulb,
 } from "lucide-react";
-import { useTheme } from "@/contexts/ThemeContext";
 import { useCloudSync } from "@/hooks/useCloudSync";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
@@ -422,8 +421,6 @@ export default function Dashboard() {
 
   const clock = useLiveClock(state.profile?.firstPayday || "", state.profile?.payFrequency || "biweekly");
   const currency = state.profile?.currency || "$";
-  const { theme, toggleTheme } = useTheme();
-
   const { isAuthenticated } = useAuth();
   // Cloud sync — auto-saves on change, auto-loads on login
   const { isSyncing } = useCloudSync({ state, onCloudLoad: replaceState });
@@ -477,13 +474,6 @@ export default function Dashboard() {
             {isSyncing && (
               <span className="text-xs text-slate-500 font-mono hidden sm:inline animate-pulse">syncing…</span>
             )}
-            <button
-              onClick={toggleTheme}
-              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-              className="flex items-center justify-center w-8 h-8 rounded-lg border border-white/8 hover:border-white/20 text-slate-400 hover:text-white transition-all"
-            >
-              {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
-            </button>
             <button
               onClick={() => setShowReset(true)}
               className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-white border border-white/8 hover:border-white/20 px-2 sm:px-3 py-1.5 rounded-lg transition-all"

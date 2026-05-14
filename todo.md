@@ -193,3 +193,10 @@
 - [x] Add "Update Savings Goal" button/modal to savings tab (set new goal amount, shows celebration if goal was reached)
 - [x] Allow adding a second/new goal when the current one is reached (modal shows "New Savings Goal" title with celebration message)
 - [x] Show goal completion celebration when savings >= goal (modal title changes to "🎉 New Savings Goal" with congratulatory message)
+
+## Remove Light Mode
+- [x] Remove Sun/Moon toggle button from dashboard header
+- [x] Remove useTheme import and toggleTheme usage from PEDashboard
+- [x] Remove .light CSS variable block from index.css
+- [x] Remove --pe-* CSS variable declarations added for light mode (were already scoped inside .light block)
+- [x] Revert App.tsx ThemeProvider to defaultTheme="dark" (fixed, no switching — removed switchable prop)
