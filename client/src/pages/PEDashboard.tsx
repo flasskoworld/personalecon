@@ -10,7 +10,7 @@ import { useLocation } from "wouter";
 import { useStore } from "@/hooks/usePEStore";
 import {
   sortDebtsByStrategy, simulatePayoff, getDebtFreeDate, formatCurrency,
-  buildSavingsProjection, monthlyInterestCost, Debt, Investment,
+  buildSavingsProjection, monthlyInterestCost, generateInvestmentId, getInvestColor, Debt, Investment,
 } from "@/lib/peStore";
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
@@ -109,7 +109,7 @@ function DebtEditModal({ debt, onSave, onClose, currency }: {
         </div>
         <div className="space-y-4">
           <div><label className={labelClass}>Debt Name</label><input className={inputClass} value={name} onChange={(e) => setName(e.target.value)} /></div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 xs:grid-cols-2 gap-3">
             <div><label className={labelClass}>Current Balance</label>
               <div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">{currency}</span>
                 <input className={inputClass + " pl-6"} type="number" value={balance} onChange={(e) => setBalance(e.target.value)} /></div></div>
@@ -301,7 +301,7 @@ export default function Dashboard() {
 
       {/* HERO STRIP */}
       <div className="border-b border-white/6 py-5" style={{ background: "linear-gradient(135deg, rgba(16,185,129,0.05), rgba(99,102,241,0.03))" }}>
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-xl sm:text-2xl font-black" style={{ fontFamily: "'Syne', sans-serif" }}>{state.profile.name}'s Economy</h1>
@@ -334,7 +334,7 @@ export default function Dashboard() {
 
       {/* TABS */}
       <div className="border-b border-white/6 sticky top-14 z-30" style={{ background: "rgba(8,10,15,0.95)", backdropFilter: "blur(12px)" }}>
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6">
           <div className="flex overflow-x-auto scrollbar-hide">
             {TABS.map((t) => (
               <button
@@ -384,28 +384,30 @@ export default function Dashboard() {
             )}
 
             <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
-              {/* Cash Flow Breakdown */}
-              <div className={card}>
-                <h3 className="text-sm font-bold text-white mb-4" style={{ fontFamily: "'Syne', sans-serif" }}>Cash Flow Breakdown</h3>
-                <div className="space-y-2.5">
-                  {[
-                    { label: "Monthly Income", value: monthlyIncome, color: "#10b981", pct: 100 },
-                    { label: "Fixed Expenses", value: totalExpenses, color: "#f59e0b", pct: Math.min(100, (totalExpenses / monthlyIncome) * 100) },
-                    { label: "Interest Bleed", value: totalMonthlyInterest, color: "#ef4444", pct: Math.min(100, (totalMonthlyInterest / monthlyIncome) * 100) },
-                    { label: "Available", value: Math.max(0, monthlyLeftover), color: "#6366f1", pct: Math.max(0, Math.min(100, (monthlyLeftover / monthlyIncome) * 100)) },
-                  ].map((row) => (
-                    <div key={row.label}>
-                      <div className="flex justify-between text-xs mb-1">
-                        <span className="text-slate-400">{row.label}</span>
-                        <span style={{ color: row.color }} className="font-mono font-semibold">{currency}{Math.round(row.value).toLocaleString()}</span>
+              {/* Cash Flow Breakdown — Pro Feature */}
+              <ProGate isPro={effectivelyPro} featureName="Monthly Cash Flow Breakdown" description="See exactly where every dollar goes: income vs. fixed expenses vs. interest bleed vs. available cash — broken down with visual bars.">
+                <div className={card}>
+                  <h3 className="text-sm font-bold text-white mb-4" style={{ fontFamily: "'Syne', sans-serif" }}>Cash Flow Breakdown</h3>
+                  <div className="space-y-2.5">
+                    {[
+                      { label: "Monthly Income", value: monthlyIncome, color: "#10b981", pct: 100 },
+                      { label: "Fixed Expenses", value: totalExpenses, color: "#f59e0b", pct: Math.min(100, (totalExpenses / monthlyIncome) * 100) },
+                      { label: "Interest Bleed", value: totalMonthlyInterest, color: "#ef4444", pct: Math.min(100, (totalMonthlyInterest / monthlyIncome) * 100) },
+                      { label: "Available", value: Math.max(0, monthlyLeftover), color: "#6366f1", pct: Math.max(0, Math.min(100, (monthlyLeftover / monthlyIncome) * 100)) },
+                    ].map((row) => (
+                      <div key={row.label}>
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="text-slate-400">{row.label}</span>
+                          <span style={{ color: row.color }} className="font-mono font-semibold">{currency}{Math.round(row.value).toLocaleString()}</span>
+                        </div>
+                        <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                          <div className="h-full rounded-full transition-all" style={{ width: `${row.pct}%`, background: row.color }} />
+                        </div>
                       </div>
-                      <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                        <div className="h-full rounded-full transition-all" style={{ width: `${row.pct}%`, background: row.color }} />
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
+              </ProGate>
 
               {/* Strategy Comparison */}
               {state.debts.length > 0 && (
@@ -495,7 +497,16 @@ export default function Dashboard() {
                       </button>
                     ))}
                   </div>
-                  <span className="text-xs text-slate-600">Debt-free by: <span className="text-white">{getDebtFreeDate(currentSim.months)}</span></span>
+                  {effectivelyPro ? (
+                    <span className="text-xs text-slate-600">Debt-free by: <span className="text-white">{getDebtFreeDate(currentSim.months)}</span></span>
+                  ) : (
+                    <button
+                      onClick={() => navigate("/pro/pricing")}
+                      className="flex items-center gap-1.5 text-xs text-slate-600 hover:text-amber-400 transition-colors"
+                    >
+                      Debt-free by: <span className="text-slate-500 line-through">--/----</span> <ProBadge />
+                    </button>
+                  )}
                 </div>
 
                 {/* Interest bleed bar */}
@@ -789,7 +800,6 @@ export default function Dashboard() {
                   <p className="text-sm text-slate-400 mb-4">Add your stocks, ETFs, crypto, or retirement accounts.</p>
                   <button
                     onClick={() => {
-                      const { generateInvestmentId, getInvestColor } = require("@/lib/store");
                       addInvestment({ id: generateInvestmentId(), name: "", type: "etf", currentValue: 0, amountInvested: 0, monthlyContribution: 0, color: getInvestColor(0) });
                     }}
                     className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold text-black hover:opacity-90 transition-all"
@@ -817,7 +827,7 @@ export default function Dashboard() {
                             <Edit3 size={13} />
                           </button>
                         </div>
-                        <div className="grid grid-cols-3 gap-3">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                           <div>
                             <div className="text-xs text-slate-500 mb-0.5">Current Value</div>
                             <div className="text-lg font-black text-white" style={{ fontFamily: "'Syne', sans-serif" }}>{currency}{inv.currentValue.toLocaleString()}</div>
@@ -970,7 +980,7 @@ export default function Dashboard() {
 
       {/* BOTTOM FOOTER BAR */}
       <footer className="border-t border-white/6 py-4 mt-8">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-3">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <div className="w-5 h-5 rounded-md flex items-center justify-center text-xs font-black" style={{ background: "linear-gradient(135deg, #10b981, #059669)", color: "#fff" }}>£</div>
             <span className="text-xs font-semibold text-slate-500" style={{ fontFamily: "'Syne', sans-serif" }}>Personal Economy</span>

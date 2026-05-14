@@ -50,8 +50,8 @@
 - [x] Gate Investment Portfolio tab behind Pro
 - [x] Gate Debt edit modal behind Pro
 - [x] Gate payment logging (Log Payment button) behind Pro
-- [ ] Gate Projected debt-free date behind Pro
-- [ ] Gate Monthly cash flow breakdown behind Pro
+- [x] Gate Projected debt-free date behind Pro
+- [x] Gate Monthly cash flow breakdown behind Pro
 - [x] Wire upgrade CTA to /pro/pricing Stripe checkout
 - [x] Show "Free Plan" vs "Pro" badge in dashboard header
 
@@ -67,7 +67,7 @@
 - [x] Update ProBadge on tabs to not show in demo mode
 
 ## Mobile Optimization
-- [ ] Fix PELanding mobile layout (hero text overflow, feature cards, stats grid, footer)
-- [ ] Fix PEDashboard mobile layout (header nav, tabs overflow, KPI grid, debt cards, charts, payment inputs)
-- [ ] Fix PEOnboarding mobile layout (step forms, input fields, navigation buttons)
-- [ ] Fix PEPricing mobile layout (pricing cards, feature list, CTA)
+- [x] Fix PELanding mobile layout (hero text overflow, feature cards, stats grid, footer)
+- [x] Fix PEDashboard mobile layout (header nav, tabs overflow, KPI grid, debt cards, charts, payment inputs)
+- [x] Fix PEOnboarding mobile layout (step forms, input fields, navigation buttons)
+- [x] Fix PEPricing mobile layout (pricing cards, feature list, CTA)

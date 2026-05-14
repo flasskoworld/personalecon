@@ -253,7 +253,7 @@ export default function Onboarding() {
               <h2 className="text-2xl font-black mb-1" style={{ fontFamily: "'Syne', sans-serif" }}>Let's start with your income</h2>
               <p className="text-slate-400 text-sm mb-8">This is the foundation of your entire plan.</p>
               <div className="space-y-5">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className={labelClass}>Your Name</label>
                     <input className={inputClass} placeholder="e.g. Jordan" value={name} onChange={(e) => setName(e.target.value)} />
@@ -268,7 +268,7 @@ export default function Onboarding() {
                     </select>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className={labelClass}>Pay Amount (per paycheck)</label>
                     <div className="relative">
@@ -321,32 +321,29 @@ export default function Onboarding() {
               <div className="space-y-3 mb-4">
                 {expenses.map((e, i) => (
                   <div key={e.id} className="rounded-xl border border-white/8 bg-white/3 p-4">
-                    <div className="grid grid-cols-12 gap-3 items-end">
-                      <div className="col-span-4">
+                    <div className="flex flex-col sm:flex-row sm:items-end gap-3">
+                      <div className="flex-1 min-w-0">
                         {i === 0 && <label className={labelClass}>Expense Name</label>}
                         <input className={inputClass} placeholder="e.g. Rent" value={e.label} onChange={(ev) => updateExpense(e.id, { label: ev.target.value })} />
                       </div>
-                      <div className="col-span-3">
+                      <div className="w-full sm:w-28">
                         {i === 0 && <label className={labelClass}>Amount</label>}
                         <div className="relative">
                           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
                           <input className={inputClass + " pl-6"} type="number" placeholder="0" value={e.amount || ""} onChange={(ev) => updateExpense(e.id, { amount: Number(ev.target.value) })} />
                         </div>
                       </div>
-                      <div className="col-span-3">
+                      <div className="w-full sm:w-36">
                         {i === 0 && <label className={labelClass}>Category</label>}
                         <select className={selectClass} value={e.category} onChange={(ev) => updateExpense(e.id, { category: ev.target.value as Expense["category"] })}>
                           {EXPENSE_CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
                         </select>
                       </div>
-                      <div className="col-span-1 flex items-center gap-2">
-                        {i === 0 && <div className={labelClass}>&nbsp;</div>}
+                      <div className="flex items-center justify-between sm:justify-start gap-3 sm:gap-2">
                         <label className="flex items-center gap-1 cursor-pointer">
                           <input type="checkbox" checked={e.isEssential} onChange={(ev) => updateExpense(e.id, { isEssential: ev.target.checked })} className="w-3.5 h-3.5 accent-emerald-500" />
                           <span className="text-xs text-slate-500">Essential</span>
                         </label>
-                      </div>
-                      <div className="col-span-1 flex justify-end">
                         {expenses.length > 1 && (
                           <button onClick={() => removeExpense(e.id)} className="text-slate-600 hover:text-rose-400 transition-colors p-1">
                             <Trash2 size={14} />
@@ -381,7 +378,7 @@ export default function Onboarding() {
               <p className="text-slate-400 text-sm mb-8">Credit cards, loans, medical bills — anything you owe. This is where your plan gets real.</p>
 
               {hasDebts === null && (
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <button
                     onClick={() => { setHasDebts(true); if (debts.length === 0) addDebt(); }}
                     className="rounded-xl border border-white/10 hover:border-emerald-500/40 bg-white/3 hover:bg-emerald-500/5 p-6 text-left transition-all"
@@ -527,7 +524,7 @@ export default function Onboarding() {
               <p className="text-slate-400 text-sm mb-8">Stocks, ETFs, crypto, 401k — add them to see your full net worth picture.</p>
 
               {hasInvestments === null && (
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <button
                     onClick={() => { setHasInvestments(true); if (investments.length === 0) addInvestment(); }}
                     className="rounded-xl border border-white/10 hover:border-indigo-500/40 bg-white/3 hover:bg-indigo-500/5 p-6 text-left transition-all"

@@ -276,8 +276,8 @@ export default function Landing() {
 
       {/* STATS STRIP */}
       <section className="py-16 border-t border-b border-white/6" style={{ background: "rgba(16,185,129,0.04)" }}>
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 text-center">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 md:gap-8 text-center">
             {[
               { value: "$0", label: "Cost to use" },
               { value: "5", label: "Dashboard tabs" },
