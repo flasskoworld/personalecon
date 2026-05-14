@@ -197,7 +197,7 @@ function InvestEditModal({ inv, onSave, onClose, currency }: {
 export default function Dashboard() {
   const [, navigate] = useLocation();
   const { state, computed, makePayment, updateDebt, addSavings, updateInvestment, addInvestment, removeInvestment, setStrategy, resetAll, updatePrimaryIncome, addAdditionalIncome, removeAdditionalIncome } = useStore();
-  const { isPro, deactivatePro } = useProStatus();
+  const { isPro, activatePro, deactivatePro } = useProStatus();
   const { isAuthenticated } = useAuth();
   const cancelSubscriptionMutation = trpc.stripe.cancelSubscription.useMutation();
   const getPortalUrlMutation = trpc.stripe.getPortalUrl.useMutation();
@@ -205,7 +205,17 @@ export default function Dashboard() {
     undefined,
     { enabled: !!(isPro && isAuthenticated) }
   );
-  const effectivelyPro = isPro || state.isDemo; // Demo mode unlocks all Pro features for preview
+  // Sync server-side Pro status: if server confirms Pro but local state doesn't know, activate locally
+  useEffect(() => {
+    if (isAuthenticated && subscriptionStatus?.isProSubscriber && !isPro) {
+      activatePro();
+    }
+  }, [isAuthenticated, subscriptionStatus?.isProSubscriber, isPro]);
+  // For authenticated users, trust server status; for unauthenticated, trust localStorage
+  const serverConfirmedPro = isAuthenticated && subscriptionStatus !== undefined
+    ? subscriptionStatus.isProSubscriber
+    : isPro;
+  const effectivelyPro = serverConfirmedPro || state.isDemo; // Demo mode unlocks all Pro features for preview
   const [activeTab, setActiveTab] = useState<"overview" | "debt" | "budget" | "savings" | "plan">("overview");
   const [editingDebt, setEditingDebt] = useState<Debt | null>(null);
   const [editingInvest, setEditingInvest] = useState<Investment | null>(null);
