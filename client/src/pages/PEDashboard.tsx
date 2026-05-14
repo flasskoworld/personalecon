@@ -194,7 +194,7 @@ function InvestEditModal({ inv, onSave, onClose, currency }: {
 // ── Main Dashboard ─────────────────────────────────────────────────────────────
 export default function Dashboard() {
   const [, navigate] = useLocation();
-  const { state, computed, makePayment, updateDebt, addSavings, updateInvestment, addInvestment, removeInvestment, setStrategy, resetAll } = useStore();
+  const { state, computed, makePayment, updateDebt, addSavings, updateInvestment, addInvestment, removeInvestment, setStrategy, resetAll, updatePrimaryIncome, addAdditionalIncome, removeAdditionalIncome } = useStore();
   const { isPro } = useProStatus();
   const effectivelyPro = isPro || state.isDemo; // Demo mode unlocks all Pro features for preview
   const [activeTab, setActiveTab] = useState<"overview" | "debt" | "budget" | "savings" | "plan">("overview");
@@ -203,6 +203,13 @@ export default function Dashboard() {
   const [payAmount, setPayAmount] = useState<Record<string, string>>({});
   const [saveAmount, setSaveAmount] = useState("");
   const [showReset, setShowReset] = useState(false);
+  // Income editor state (must be declared before early return to follow rules of hooks)
+  const [showIncomeEditor, setShowIncomeEditor] = useState(false);
+  const [incomeEditVal, setIncomeEditVal] = useState(state.profile?.income?.toString() || "");
+  const [incomeFreqEdit, setIncomeFreqEdit] = useState<"biweekly"|"weekly"|"semimonthly"|"monthly">(state.profile?.payFrequency || "biweekly");
+  const [newSourceLabel, setNewSourceLabel] = useState("");
+  const [newSourceAmount, setNewSourceAmount] = useState("");
+  const [newSourceFreq, setNewSourceFreq] = useState<"biweekly"|"weekly"|"semimonthly"|"monthly">("monthly");
 
   const clock = useLiveClock(state.profile?.firstPayday || "", state.profile?.payFrequency || "biweekly");
   const currency = state.profile?.currency || "$";
@@ -214,7 +221,7 @@ export default function Dashboard() {
 
   if (!state.setupComplete || !state.profile) return null;
 
-  const { monthlyIncome, totalExpenses, totalDebt, totalMonthlyInterest, monthlyLeftover, totalInvestmentValue, totalInvestmentGain, netWorth } = computed;
+  const { monthlyIncome, totalMonthlyIncome, additionalMonthlyIncome, totalExpenses, totalDebt, totalMonthlyInterest, monthlyLeftover, totalInvestmentValue, totalInvestmentGain, netWorth } = computed;
 
   const sortedDebts = sortDebtsByStrategy(state.debts, state.strategy);
   const debtBudget = Math.max(0, monthlyLeftover * 0.4);
@@ -316,7 +323,7 @@ export default function Dashboard() {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
             {[
-              { label: "Monthly Income", value: monthlyIncome, color: "text-white", icon: <DollarSign size={14} /> },
+              { label: "Monthly Income", value: totalMonthlyIncome, color: "text-white", icon: <DollarSign size={14} /> },
               { label: "Total Debt", value: totalDebt, color: "text-rose-400", icon: <AlertTriangle size={14} /> },
               { label: "Savings Stack", value: state.totalSaved, color: "text-emerald-400", icon: <Target size={14} /> },
               { label: "Portfolio Value", value: totalInvestmentValue, color: "text-indigo-400", icon: <TrendingUp size={14} /> },
@@ -390,10 +397,10 @@ export default function Dashboard() {
                   <h3 className="text-sm font-bold text-white mb-4" style={{ fontFamily: "'Syne', sans-serif" }}>Cash Flow Breakdown</h3>
                   <div className="space-y-2.5">
                     {[
-                      { label: "Monthly Income", value: monthlyIncome, color: "#10b981", pct: 100 },
-                      { label: "Fixed Expenses", value: totalExpenses, color: "#f59e0b", pct: Math.min(100, (totalExpenses / monthlyIncome) * 100) },
-                      { label: "Interest Bleed", value: totalMonthlyInterest, color: "#ef4444", pct: Math.min(100, (totalMonthlyInterest / monthlyIncome) * 100) },
-                      { label: "Available", value: Math.max(0, monthlyLeftover), color: "#6366f1", pct: Math.max(0, Math.min(100, (monthlyLeftover / monthlyIncome) * 100)) },
+                      { label: "Monthly Income", value: totalMonthlyIncome, color: "#10b981", pct: 100 },
+                      { label: "Fixed Expenses", value: totalExpenses, color: "#f59e0b", pct: Math.min(100, (totalExpenses / totalMonthlyIncome) * 100) },
+                      { label: "Interest Bleed", value: totalMonthlyInterest, color: "#ef4444", pct: Math.min(100, (totalMonthlyInterest / totalMonthlyIncome) * 100) },
+                      { label: "Available", value: Math.max(0, monthlyLeftover), color: "#6366f1", pct: Math.max(0, Math.min(100, (monthlyLeftover / totalMonthlyIncome) * 100)) },
                     ].map((row) => (
                       <div key={row.label}>
                         <div className="flex justify-between text-xs mb-1">
@@ -440,6 +447,113 @@ export default function Dashboard() {
                   )}
                 </div>
               )}
+            </div>
+
+            {/* Income Management */}
+            <div className={card}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-bold text-white" style={{ fontFamily: "'Syne', sans-serif" }}>Income</h3>
+                <button
+                  onClick={() => { setShowIncomeEditor(!showIncomeEditor); setIncomeEditVal(state.profile?.income?.toString() || ""); setIncomeFreqEdit(state.profile?.payFrequency || "biweekly"); }}
+                  className="text-xs text-slate-400 hover:text-emerald-400 flex items-center gap-1 transition-colors"
+                >
+                  <Edit3 size={12} /> Edit
+                </button>
+              </div>
+              {/* Primary income row */}
+              <div className="flex items-center justify-between py-2.5 border-b border-white/6">
+                <div>
+                  <div className="text-xs text-slate-500 mb-0.5">Primary Income</div>
+                  <div className="text-xs text-slate-400 capitalize">{state.profile?.payFrequency} &middot; {currency}{state.profile?.income?.toLocaleString()} per period</div>
+                </div>
+                <div className="text-lg font-black text-white" style={{ fontFamily: "'Syne', sans-serif" }}>
+                  <AnimNum value={monthlyIncome} prefix={currency} /><span className="text-xs text-slate-500 font-normal">/mo</span>
+                </div>
+              </div>
+              {/* Primary income editor */}
+              {showIncomeEditor && (
+                <div className="mt-3 p-3 rounded-xl bg-white/3 border border-white/8 space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className={labelClass}>Amount per period</label>
+                      <input className={inputClass} type="number" value={incomeEditVal} onChange={(e) => setIncomeEditVal(e.target.value)} placeholder="e.g. 2500" />
+                    </div>
+                    <div>
+                      <label className={labelClass}>Pay frequency</label>
+                      <select className={inputClass} value={incomeFreqEdit} onChange={(e) => setIncomeFreqEdit(e.target.value as typeof incomeFreqEdit)}>
+                        <option value="weekly">Weekly</option>
+                        <option value="biweekly">Biweekly</option>
+                        <option value="semimonthly">Semi-monthly</option>
+                        <option value="monthly">Monthly</option>
+                      </select>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      const val = parseFloat(incomeEditVal);
+                      if (!val || val <= 0) { toast.error("Enter a valid income amount"); return; }
+                      updatePrimaryIncome(val, incomeFreqEdit);
+                      setShowIncomeEditor(false);
+                      toast.success("Primary income updated!");
+                    }}
+                    className="w-full py-2 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-semibold hover:bg-emerald-500/25 transition-all"
+                  >
+                    Save Income
+                  </button>
+                </div>
+              )}
+              {/* Additional income sources */}
+              {(state.additionalIncome || []).map((src) => (
+                <div key={src.id} className="flex items-center justify-between py-2.5 border-b border-white/6">
+                  <div>
+                    <div className="text-sm text-slate-300">{src.label}</div>
+                    <div className="text-xs text-slate-500 capitalize">{src.frequency} &middot; {currency}{src.amount.toLocaleString()} per period</div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="text-sm font-semibold text-emerald-400">
+                      +<AnimNum value={src.frequency === "weekly" ? src.amount * 52/12 : src.frequency === "biweekly" ? src.amount * 26/12 : src.frequency === "semimonthly" ? src.amount * 2 : src.amount} prefix={currency} /><span className="text-xs text-slate-500 font-normal">/mo</span>
+                    </div>
+                    <button onClick={() => { removeAdditionalIncome(src.id); toast.success(`${src.label} removed`); }} className="text-slate-600 hover:text-rose-400 transition-colors p-1">
+                      <X size={14} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {/* Total combined income — only shown when there are additional sources */}
+              {(state.additionalIncome || []).length > 0 && (
+                <div className="flex items-center justify-between py-2.5 border-b border-white/6">
+                  <div className="text-xs text-slate-500 font-semibold uppercase tracking-wide">Total Combined</div>
+                  <div className="text-lg font-black text-emerald-400" style={{ fontFamily: "'Syne', sans-serif" }}>
+                    <AnimNum value={totalMonthlyIncome} prefix={currency} /><span className="text-xs text-slate-500 font-normal">/mo</span>
+                  </div>
+                </div>
+              )}
+              {/* Add additional income source */}
+              <div className="mt-4">
+                <div className="text-xs text-slate-500 mb-2 font-medium">Add income source <span className="text-slate-600">(side hustle, freelance, part-time, etc.)</span></div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <input className={inputClass} placeholder="Label (e.g. Freelance)" value={newSourceLabel} onChange={(e) => setNewSourceLabel(e.target.value)} />
+                  <input className={inputClass} type="number" placeholder="Amount per period" value={newSourceAmount} onChange={(e) => setNewSourceAmount(e.target.value)} />
+                  <select className={inputClass} value={newSourceFreq} onChange={(e) => setNewSourceFreq(e.target.value as typeof newSourceFreq)}>
+                    <option value="weekly">Weekly</option>
+                    <option value="biweekly">Biweekly</option>
+                    <option value="semimonthly">Semi-monthly</option>
+                    <option value="monthly">Monthly</option>
+                  </select>
+                </div>
+                <button
+                  onClick={() => {
+                    const amt = parseFloat(newSourceAmount);
+                    if (!newSourceLabel.trim() || !amt || amt <= 0) { toast.error("Enter a label and amount"); return; }
+                    addAdditionalIncome({ id: `ai-${Date.now()}`, label: newSourceLabel.trim(), amount: amt, frequency: newSourceFreq });
+                    setNewSourceLabel(""); setNewSourceAmount("");
+                    toast.success(`${newSourceLabel.trim()} added to your income!`);
+                  }}
+                  className="mt-2 w-full py-2 rounded-lg bg-white/5 border border-white/10 text-slate-300 text-xs font-semibold hover:bg-emerald-500/10 hover:border-emerald-500/30 hover:text-emerald-400 transition-all flex items-center justify-center gap-1.5"
+                >
+                  <Plus size={12} /> Add Income Source
+                </button>
+              </div>
             </div>
 
             {/* Savings projection chart */}
@@ -660,11 +774,11 @@ export default function Dashboard() {
                     <div className="space-y-4">
                       <div>
                         <div className="flex justify-between text-xs mb-1"><span className="text-slate-400">Essential (fixed)</span><span className="text-white font-mono">{currency}{Math.round(essential).toLocaleString()}</span></div>
-                        <div className="h-2 bg-white/5 rounded-full overflow-hidden"><div className="h-full bg-amber-500 rounded-full" style={{ width: `${Math.min(100, (essential / monthlyIncome) * 100)}%` }} /></div>
+                        <div className="h-2 bg-white/5 rounded-full overflow-hidden"><div className="h-full bg-amber-500 rounded-full" style={{ width: `${Math.min(100, (essential / totalMonthlyIncome) * 100)}%` }} /></div>
                       </div>
                       <div>
                         <div className="flex justify-between text-xs mb-1"><span className="text-slate-400">Non-essential (cuttable)</span><span className="text-rose-400 font-mono">{currency}{Math.round(nonEssential).toLocaleString()}</span></div>
-                        <div className="h-2 bg-white/5 rounded-full overflow-hidden"><div className="h-full bg-rose-500 rounded-full" style={{ width: `${Math.min(100, (nonEssential / monthlyIncome) * 100)}%` }} /></div>
+                        <div className="h-2 bg-white/5 rounded-full overflow-hidden"><div className="h-full bg-rose-500 rounded-full" style={{ width: `${Math.min(100, (nonEssential / totalMonthlyIncome) * 100)}%` }} /></div>
                       </div>
                       <div className="rounded-xl bg-emerald-500/8 border border-emerald-500/15 p-3 text-xs text-emerald-300">
                         Cutting non-essentials frees up <strong>{currency}{Math.round(nonEssential).toLocaleString()}/mo</strong> — that's <strong>{currency}{Math.round(nonEssential * 12).toLocaleString()}/year</strong> toward debt or savings

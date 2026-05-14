@@ -4,6 +4,7 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   AppState,
+  AdditionalIncome,
   Debt,
   Expense,
   Investment,
@@ -14,6 +15,8 @@ import {
   saveState,
   clearState,
   monthlyIncome,
+  additionalMonthlyIncome,
+  totalMonthlyIncome,
   totalExpenses,
   totalDebt,
   totalPaid,
@@ -27,7 +30,14 @@ import {
 } from "@/lib/peStore";
 
 export function useStore() {
-  const [state, setState] = useState<AppState>(() => loadState());
+  const [state, setState] = useState<AppState>(() => {
+    const loaded = loadState();
+    // Migrate existing saved states that don't have additionalIncome yet
+    if (!loaded.additionalIncome) {
+      return { ...loaded, additionalIncome: [] };
+    }
+    return loaded;
+  });
 
   // Persist on every change
   useEffect(() => {
@@ -52,6 +62,7 @@ export function useStore() {
       expenses,
       debts,
       investments,
+      additionalIncome: [],
       totalSaved,
       debtPayments: {},
       investmentLogs: {},
@@ -78,6 +89,38 @@ export function useStore() {
     clearState();
     setState(DEFAULT_STATE);
   }, []);
+
+  // ── Income Actions ─────────────────────────────────────────────────────────
+
+  const updatePrimaryIncome = useCallback((income: number, payFrequency: UserProfile["payFrequency"]) => {
+    update((prev) => ({
+      ...prev,
+      profile: prev.profile ? { ...prev.profile, income, payFrequency } : prev.profile,
+    }));
+  }, [update]);
+
+  const addAdditionalIncome = useCallback((source: AdditionalIncome) => {
+    update((prev) => ({
+      ...prev,
+      additionalIncome: [...(prev.additionalIncome || []), source],
+    }));
+  }, [update]);
+
+  const removeAdditionalIncome = useCallback((id: string) => {
+    update((prev) => ({
+      ...prev,
+      additionalIncome: (prev.additionalIncome || []).filter((s) => s.id !== id),
+    }));
+  }, [update]);
+
+  const updateAdditionalIncome = useCallback((id: string, fields: Partial<AdditionalIncome>) => {
+    update((prev) => ({
+      ...prev,
+      additionalIncome: (prev.additionalIncome || []).map((s) =>
+        s.id === id ? { ...s, ...fields } : s
+      ),
+    }));
+  }, [update]);
 
   // ── Debt Actions ───────────────────────────────────────────────────────────
 
@@ -139,6 +182,8 @@ export function useStore() {
 
   const computed = {
     monthlyIncome: monthlyIncome(state),
+    additionalMonthlyIncome: additionalMonthlyIncome(state),
+    totalMonthlyIncome: totalMonthlyIncome(state),
     totalExpenses: totalExpenses(state),
     totalDebt: totalDebt(state),
     totalPaid: totalPaid(state),
@@ -159,6 +204,10 @@ export function useStore() {
     completeSetup,
     loadDemo,
     resetAll,
+    updatePrimaryIncome,
+    addAdditionalIncome,
+    removeAdditionalIncome,
+    updateAdditionalIncome,
     makePayment,
     updateDebt,
     addSavings,

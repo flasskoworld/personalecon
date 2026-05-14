@@ -90,3 +90,11 @@
 - [x] Ensure Pro status is unlocked immediately: useProStatus now runs checkAndPersistUpgradeParam() at module-load time (before any React render)
 - [x] Post-payment redirect goes to /pro/dashboard (Stripe success_url confirmed)
 - [x] Pro features active on dashboard after payment: isPro initialised from localStorage synchronously so features unlock on first render after redirect
+
+## Income Management
+- [x] Add additionalIncome array to AppState (id, label, amount, frequency)
+- [x] Update computed monthlyIncome to include additional income sources
+- [x] Add updatePrimaryIncome action to store
+- [x] Add addAdditionalIncome / removeAdditionalIncome actions to store
+- [x] Build Income section in dashboard Overview tab (edit primary + add/remove extra sources)
+- [x] Show total combined income in KPI strip (shown inline in Income card when additional sources exist)

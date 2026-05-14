@@ -31,6 +31,13 @@ export interface Debt {
   color: string;
 }
 
+export interface AdditionalIncome {
+  id: string;
+  label: string;  // e.g. "Freelance", "Side Hustle", "Part-time Job"
+  amount: number; // per-period amount
+  frequency: PayFrequency;
+}
+
 export interface Investment {
   id: string;
   name: string;
@@ -46,6 +53,7 @@ export interface AppState {
   expenses: Expense[];
   debts: Debt[];
   investments: Investment[];
+  additionalIncome: AdditionalIncome[]; // optional extra income sources
   totalSaved: number;
   debtPayments: Record<string, number>; // debtId -> total paid this session
   investmentLogs: Record<string, number>; // investmentId -> current value override
@@ -95,6 +103,7 @@ export const DEMO_STATE: AppState = {
     { id: "i3", name: "Ethereum", type: "crypto", currentValue: 780, amountInvested: 1000, monthlyContribution: 0, color: INVEST_COLORS[2] },
   ],
   totalSaved: 2100,
+  additionalIncome: [],
   debtPayments: {},
   investmentLogs: {},
   strategy: "avalanche",
@@ -111,6 +120,7 @@ export const DEFAULT_STATE: AppState = {
   debts: [],
   investments: [],
   totalSaved: 0,
+  additionalIncome: [],
   debtPayments: {},
   investmentLogs: {},
   strategy: "avalanche",
@@ -155,6 +165,30 @@ export function monthlyIncome(state: AppState): number {
   }
 }
 
+/** Convert a single AdditionalIncome source to a monthly amount */
+export function toMonthlyAmount(amount: number, frequency: PayFrequency): number {
+  switch (frequency) {
+    case "weekly": return amount * 52 / 12;
+    case "biweekly": return amount * 26 / 12;
+    case "semimonthly": return amount * 2;
+    case "monthly": return amount;
+    default: return amount;
+  }
+}
+
+/** Total monthly income from all additional sources */
+export function additionalMonthlyIncome(state: AppState): number {
+  return (state.additionalIncome || []).reduce(
+    (sum, s) => sum + toMonthlyAmount(s.amount, s.frequency),
+    0
+  );
+}
+
+/** Combined primary + additional monthly income */
+export function totalMonthlyIncome(state: AppState): number {
+  return monthlyIncome(state) + additionalMonthlyIncome(state);
+}
+
 export function totalExpenses(state: AppState): number {
   return state.expenses.reduce((sum, e) => sum + e.amount, 0);
 }
@@ -176,7 +210,7 @@ export function totalMonthlyInterest(state: AppState): number {
 }
 
 export function monthlyLeftover(state: AppState): number {
-  return monthlyIncome(state) - totalExpenses(state);
+  return totalMonthlyIncome(state) - totalExpenses(state);
 }
 
 export function totalInvestmentValue(state: AppState): number {
