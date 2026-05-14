@@ -90,7 +90,23 @@ export function useStore() {
     setState(DEFAULT_STATE);
   }, []);
 
+  /**
+   * Replace the entire state with a cloud-loaded version.
+   * Used by useCloudSync when the cloud has a newer plan.
+   */
+  const replaceState = useCallback((newState: AppState) => {
+    saveState(newState);
+    setState(newState);
+  }, []);
+
   // ── Income Actions ─────────────────────────────────────────────────────────
+
+  const updateSavingsGoal = useCallback((newGoal: number) => {
+    update((prev) => ({
+      ...prev,
+      profile: prev.profile ? { ...prev.profile, savingsGoal: newGoal } : prev.profile,
+    }));
+  }, [update]);
 
   const updatePrimaryIncome = useCallback((income: number, payFrequency: UserProfile["payFrequency"]) => {
     update((prev) => ({
@@ -247,5 +263,7 @@ export function useStore() {
     addInvestment,
     removeInvestment,
     setStrategy,
+    replaceState,
+    updateSavingsGoal,
   };
 }

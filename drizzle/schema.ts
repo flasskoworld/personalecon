@@ -34,3 +34,22 @@ export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
 // TODO: Add your tables here
+
+/**
+ * Stores the user's full financial plan as a JSON blob.
+ * One row per user — upserted on every save.
+ * Local-first: localStorage is the primary store; this is the cloud backup.
+ */
+export const userPlans = mysqlTable("user_plans", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  /** Full serialized peStore state as JSON string */
+  planData: text("planData").notNull(),
+  /** Client-side timestamp (ms since epoch) of the last local change — used for merge conflict resolution */
+  clientUpdatedAt: int("clientUpdatedAt", { unsigned: true }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type UserPlan = typeof userPlans.$inferSelect;
+export type InsertUserPlan = typeof userPlans.$inferInsert;

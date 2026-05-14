@@ -20,14 +20,18 @@ import {
   TrendingUp, TrendingDown, AlertTriangle, CheckCircle2, Target,
   Flame, Snowflake, Edit3, X, RotateCcw, ChevronRight, DollarSign,
   BarChart3, Shield, Layers, ArrowUpRight, ArrowDownRight, Plus, Trash2,
-  Zap, BookOpen, Info, Lightbulb,
+  Zap, BookOpen, Info, Lightbulb, Sun, Moon,
 } from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
+import { useCloudSync } from "@/hooks/useCloudSync";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { getLoginUrl } from "@/const";
 import { toast } from "sonner";
 
 // ── Shared styles ─────────────────────────────────────────────────────────────
-const card = "rounded-2xl border border-white/8 bg-white/3 p-5";
-const cardDark = "rounded-2xl border border-white/8 bg-[#0d1117] p-5";
-const inputClass = "w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500/50 transition-all";
+const card = "rounded-2xl border border-white/8 p-5" + " " + "[background:var(--card-bg-subtle)]";
+const cardDark = "rounded-2xl border border-white/8 p-5" + " " + "[background:var(--card-bg)]";
+const inputClass = "w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald-500/50 transition-all" + " " + "border"
 const labelClass = "block text-xs text-slate-400 mb-1 font-medium";
 
 // ── Live Clock Hook ────────────────────────────────────────────────────────────
@@ -395,7 +399,7 @@ function EditExpenseModal({ expense, onSave, onClose, currency }: {
 // ── Main Dashboard ─────────────────────────────────────────────────────────────
 export default function Dashboard() {
   const [, navigate] = useLocation();
-  const { state, computed, makePayment, updateDebt, addDebt, removeDebt, addExpense, removeExpense, updateExpense, addSavings, updateInvestment, addInvestment, removeInvestment, setStrategy, resetAll, updatePrimaryIncome, addAdditionalIncome, removeAdditionalIncome } = useStore();
+  const { state, computed, makePayment, updateDebt, addDebt, removeDebt, addExpense, removeExpense, updateExpense, addSavings, updateInvestment, addInvestment, removeInvestment, setStrategy, resetAll, updatePrimaryIncome, addAdditionalIncome, removeAdditionalIncome, replaceState, updateSavingsGoal } = useStore();
   // All features are free — no Pro gating
   const [activeTab, setActiveTab] = useState<"overview" | "debt" | "budget" | "savings" | "plan">("overview");
   const [editingDebt, setEditingDebt] = useState<Debt | null>(null);
@@ -406,6 +410,8 @@ export default function Dashboard() {
   const [payAmount, setPayAmount] = useState<Record<string, string>>({});
   const [saveAmount, setSaveAmount] = useState("");
   const [showReset, setShowReset] = useState(false);
+  const [showGoalModal, setShowGoalModal] = useState(false);
+  const [goalInput, setGoalInput] = useState("");
   // Income editor state (must be declared before early return to follow rules of hooks)
   const [showIncomeEditor, setShowIncomeEditor] = useState(false);
   const [incomeEditVal, setIncomeEditVal] = useState(state.profile?.income?.toString() || "");
@@ -416,6 +422,11 @@ export default function Dashboard() {
 
   const clock = useLiveClock(state.profile?.firstPayday || "", state.profile?.payFrequency || "biweekly");
   const currency = state.profile?.currency || "$";
+  const { theme, toggleTheme } = useTheme();
+
+  const { isAuthenticated } = useAuth();
+  // Cloud sync — auto-saves on change, auto-loads on login
+  const { isSyncing } = useCloudSync({ state, onCloudLoad: replaceState });
 
   // Redirect to onboarding if no plan has been set up yet
   useEffect(() => {
@@ -446,7 +457,7 @@ export default function Dashboard() {
     <div className="min-h-screen bg-[#080a0f] text-white" style={{ fontFamily: "'Inter', sans-serif" }}>
 
       {/* HEADER */}
-      <header className="border-b border-white/6 sticky top-0 z-40" style={{ background: "rgba(8,10,15,0.95)", backdropFilter: "blur(12px)" }}>
+      <header className="border-b border-white/6 sticky top-0 z-40" style={{ background: "var(--header-bg)", backdropFilter: "blur(12px)" }}>
         <div className="max-w-7xl mx-auto px-3 sm:px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-md flex items-center justify-center text-sm font-black" style={{ background: "linear-gradient(135deg, #10b981, #059669)", color: "#fff" }}>£</div>
@@ -463,6 +474,16 @@ export default function Dashboard() {
             )}
           </div>
           <div className="flex items-center gap-2">
+            {isSyncing && (
+              <span className="text-xs text-slate-500 font-mono hidden sm:inline animate-pulse">syncing…</span>
+            )}
+            <button
+              onClick={toggleTheme}
+              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              className="flex items-center justify-center w-8 h-8 rounded-lg border border-white/8 hover:border-white/20 text-slate-400 hover:text-white transition-all"
+            >
+              {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
+            </button>
             <button
               onClick={() => setShowReset(true)}
               className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-white border border-white/8 hover:border-white/20 px-2 sm:px-3 py-1.5 rounded-lg transition-all"
@@ -536,7 +557,7 @@ export default function Dashboard() {
       </div>
 
       {/* TABS */}
-      <div className="border-b border-white/6 sticky top-14 z-30" style={{ background: "rgba(8,10,15,0.95)", backdropFilter: "blur(12px)" }}>
+      <div className="border-b border-white/6 sticky top-14 z-30" style={{ background: "var(--header-bg)", backdropFilter: "blur(12px)" }}>
         <div className="max-w-7xl mx-auto px-3 sm:px-6">
           <div className="flex overflow-x-auto scrollbar-hide">
             {TABS.map((t) => (
@@ -759,7 +780,7 @@ export default function Dashboard() {
                   </defs>
                   <XAxis dataKey="month" tick={{ fill: "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fill: "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => `${currency}${(v / 1000).toFixed(0)}k`} />
-                  <Tooltip formatter={(v: number) => [`${currency}${v.toLocaleString()}`, "Savings"]} contentStyle={{ background: "#0d1117", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 12 }} />
+                  <Tooltip formatter={(v: number) => [`${currency}${v.toLocaleString()}`, "Savings"]} contentStyle={{ background: "var(--card-bg)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 12 }} />
                   <Area type="monotone" dataKey="balance" stroke="#10b981" strokeWidth={2} fill="url(#sg)" />
                   {state.profile?.savingsGoal && (
                     <Area type="monotone" dataKey={() => state.profile!.savingsGoal} stroke="#d4af37" strokeWidth={1} strokeDasharray="4 4" fill="none" name="Goal" />
@@ -968,7 +989,7 @@ export default function Dashboard() {
                           <Cell key={e.id} fill={["#10b981", "#f59e0b", "#6366f1", "#ec4899", "#14b8a6", "#f97316", "#8b5cf6", "#06b6d4"][i % 8]} />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(v: number) => [`${currency}${v.toLocaleString()}`, ""]} contentStyle={{ background: "#0d1117", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 12 }} />
+                      <Tooltip formatter={(v: number) => [`${currency}${v.toLocaleString()}`, ""]} contentStyle={{ background: "var(--card-bg)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 12 }} />
                     </PieChart>
                   </ResponsiveContainer>
                 )}
@@ -1044,7 +1065,15 @@ export default function Dashboard() {
             <div className={card}>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-bold text-white" style={{ fontFamily: "'Syne', sans-serif" }}>Savings Stack</h3>
-                <div className="text-xs text-slate-500">Goal: <span className="text-white">{currency}{(state.profile?.savingsGoal || 0).toLocaleString()}</span></div>
+                <div className="flex items-center gap-2">
+                  <div className="text-xs text-slate-500">Goal: <span className="text-white">{currency}{(state.profile?.savingsGoal || 0).toLocaleString()}</span></div>
+                  <button
+                    onClick={() => { setGoalInput((state.profile?.savingsGoal || "").toString()); setShowGoalModal(true); }}
+                    className="flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300 border border-emerald-500/30 hover:border-emerald-400/60 px-2 py-0.5 rounded-lg transition-all"
+                  >
+                    <Edit3 size={10} /> Update Goal
+                  </button>
+                </div>
               </div>
               <div className="flex items-end gap-4 mb-4">
                 <div>
@@ -1073,6 +1102,25 @@ export default function Dashboard() {
                   </div>
                 ))}
               </div>
+              {/* Goal reached celebration */}
+              {state.profile?.savingsGoal && state.totalSaved >= state.profile.savingsGoal && (
+                <div className="mb-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">🎉</span>
+                    <div>
+                      <p className="text-xs font-bold text-emerald-400">Goal Reached!</p>
+                      <p className="text-xs text-slate-400">You hit {currency}{state.profile.savingsGoal.toLocaleString()}. Set a new target to keep building.</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => { setGoalInput(""); setShowGoalModal(true); }}
+                    className="text-xs font-bold text-white px-3 py-1.5 rounded-lg shrink-0 transition-all hover:opacity-90"
+                    style={{ background: "linear-gradient(135deg, #10b981, #059669)" }}
+                  >
+                    New Goal
+                  </button>
+                </div>
+              )}
               {/* Log savings */}
               <div className="flex gap-2">
                 <div className="relative flex-1">
@@ -1108,7 +1156,7 @@ export default function Dashboard() {
                   </defs>
                   <XAxis dataKey="month" tick={{ fill: "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fill: "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => `${currency}${(v / 1000).toFixed(0)}k`} />
-                  <Tooltip formatter={(v: number) => [`${currency}${v.toLocaleString()}`, "Savings"]} contentStyle={{ background: "#0d1117", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 12 }} />
+                  <Tooltip formatter={(v: number) => [`${currency}${v.toLocaleString()}`, "Savings"]} contentStyle={{ background: "var(--card-bg)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 12 }} />
                   <Area type="monotone" dataKey="balance" stroke="#10b981" strokeWidth={2} fill="url(#sg2)" />
                 </AreaChart>
               </ResponsiveContainer>
@@ -1579,6 +1627,61 @@ export default function Dashboard() {
         />
       )}
 
+      {/* SAVINGS GOAL MODAL */}
+      {showGoalModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.7)" }}>
+          <div className={cardDark + " w-full max-w-sm"} style={{ background: "var(--card-bg)" }}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-bold text-white" style={{ fontFamily: "'Syne', sans-serif" }}>
+                {state.totalSaved >= (state.profile?.savingsGoal || 0) && state.profile?.savingsGoal ? "🎉 New Savings Goal" : "Update Savings Goal"}
+              </h3>
+              <button onClick={() => setShowGoalModal(false)} className="text-slate-400 hover:text-white"><X size={16} /></button>
+            </div>
+            {state.totalSaved >= (state.profile?.savingsGoal || 0) && state.profile?.savingsGoal ? (
+              <p className="text-xs text-emerald-400 mb-4">You've hit your goal of {currency}{state.profile.savingsGoal.toLocaleString()}! Set a new target to keep the momentum going.</p>
+            ) : (
+              <p className="text-xs text-slate-400 mb-4">Current goal: <span className="text-white">{currency}{(state.profile?.savingsGoal || 0).toLocaleString()}</span>. Update it anytime as your situation changes.</p>
+            )}
+            <div className="relative mb-4">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">{currency}</span>
+              <input
+                className={inputClass + " pl-6 py-2"}
+                type="number"
+                placeholder="e.g. 10000"
+                value={goalInput}
+                onChange={(e) => setGoalInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    const val = Number(goalInput);
+                    if (!val || val <= 0) { toast.error("Enter a valid goal amount"); return; }
+                    updateSavingsGoal(val);
+                    setShowGoalModal(false);
+                    toast.success(`Savings goal updated to ${currency}${val.toLocaleString()}!`);
+                  }
+                }}
+                autoFocus
+              />
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setShowGoalModal(false)} className="flex-1 text-xs text-slate-400 border border-white/8 py-2 rounded-lg hover:border-white/20 transition-all">Cancel</button>
+              <button
+                onClick={() => {
+                  const val = Number(goalInput);
+                  if (!val || val <= 0) { toast.error("Enter a valid goal amount"); return; }
+                  updateSavingsGoal(val);
+                  setShowGoalModal(false);
+                  toast.success(`Savings goal updated to ${currency}${val.toLocaleString()}!`);
+                }}
+                className="flex-1 text-xs font-bold text-white py-2 rounded-lg transition-all"
+                style={{ background: "linear-gradient(135deg, #10b981, #059669)" }}
+              >
+                Save Goal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* BOTTOM FOOTER BAR */}
       <footer className="border-t border-white/6 py-6 mt-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col gap-4">
@@ -1589,7 +1692,21 @@ export default function Dashboard() {
               <span className="text-xs font-semibold text-slate-500" style={{ fontFamily: "'Syne', sans-serif" }}>Personal Economy</span>
             </div>
             <PoweredByBadge />
-            <p className="text-xs text-slate-600">All data is stored locally on your device. Nothing is sent to any server.</p>
+            {isAuthenticated ? (
+              <p className="text-xs text-slate-600 flex items-center gap-1.5">
+                {isSyncing ? (
+                  <><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse inline-block" />syncing to cloud…</>
+                ) : (
+                  <><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />synced across devices</>
+                )}
+              </p>
+            ) : (
+              <p className="text-xs text-slate-600">
+                Data stored locally. 
+                <a href={getLoginUrl()} className="text-emerald-500 hover:text-emerald-400 underline underline-offset-2 transition-colors">Sign in</a>
+                 to sync across devices.
+              </p>
+            )}
           </div>
           {/* Bottom row: support */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-x-6 gap-y-2 border-t border-white/5 pt-4">

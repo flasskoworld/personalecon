@@ -173,3 +173,23 @@
 - [x] Fix: NotFound (404) page uses light theme (white/slate-50) — restyle to match the dark brand
 - [x] Fix: Remove /personal route and Home.tsx dead-end (old Hustle Board — unreachable from UI but still accessible by URL)
 - [x] Fix: Onboarding has no escape route — add a subtle "← Back to home" link in the top bar so users aren't trapped
+
+## Light/Dark Mode
+- [x] Add light mode CSS variables to index.css (.light class with inverted palette)
+- [x] Add theme toggle button (sun/moon icon) to dashboard header and landing page nav
+- [x] Persist theme preference to localStorage so it survives page refresh (ThemeContext already handles this)
+- [x] Ensure all custom inline styles and hardcoded colors respect the active theme (CSS variables applied to structural elements)
+
+## Account-Based Cloud Sync
+- [x] Add user_plans table to drizzle schema (userId, planData JSON, clientUpdatedAt)
+- [x] Add DB helpers: savePlan (last-write-wins by clientUpdatedAt), loadPlan
+- [x] Add tRPC procedures: plan.save (authed, saves full state JSON), plan.load (authed, returns latest plan)
+- [x] Frontend: on login, load cloud plan and merge with local (cloud wins if newer clientUpdatedAt)
+- [x] Frontend: auto-save to cloud on every state change (debounced 3s) when user is authenticated
+- [x] Show sync status indicator in dashboard header (syncing... pulse shown when save is in progress)
+- [x] Show "Sign in to sync across devices" prompt in dashboard footer for unauthenticated users (footer note updated)
+
+## Savings Goal Shortcut
+- [x] Add "Update Savings Goal" button/modal to savings tab (set new goal amount, shows celebration if goal was reached)
+- [x] Allow adding a second/new goal when the current one is reached (modal shows "New Savings Goal" title with celebration message)
+- [x] Show goal completion celebration when savings >= goal (modal title changes to "🎉 New Savings Goal" with congratulatory message)

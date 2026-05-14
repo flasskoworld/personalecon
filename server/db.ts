@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertUser, users, userPlans } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -118,3 +118,45 @@ export async function updateUserStripeInfo(userId: number, data: {
 }
 
 // TODO: add feature queries here as your schema grows.
+
+/**
+ * Upsert the user's full financial plan (local-first cloud sync).
+ * clientUpdatedAt is the ms-since-epoch timestamp from the client's last local change.
+ * We only overwrite the server copy if the incoming clientUpdatedAt is newer.
+ */
+export async function savePlan(userId: number, planData: string, clientUpdatedAt: number): Promise<{ saved: boolean; serverClientUpdatedAt: number | null }> {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot save plan: database not available");
+    return { saved: false, serverClientUpdatedAt: null };
+  }
+
+  // Check existing record
+  const existing = await db.select().from(userPlans).where(eq(userPlans.userId, userId)).limit(1);
+  if (existing.length > 0 && existing[0].clientUpdatedAt > clientUpdatedAt) {
+    // Server has a newer version — don't overwrite, let client know
+    return { saved: false, serverClientUpdatedAt: existing[0].clientUpdatedAt };
+  }
+
+  await db.insert(userPlans)
+    .values({ userId, planData, clientUpdatedAt })
+    .onDuplicateKeyUpdate({ set: { planData, clientUpdatedAt } });
+
+  return { saved: true, serverClientUpdatedAt: clientUpdatedAt };
+}
+
+/**
+ * Load the user's saved plan from the database.
+ * Returns null if no plan exists yet.
+ */
+export async function loadPlan(userId: number): Promise<{ planData: string; clientUpdatedAt: number } | null> {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot load plan: database not available");
+    return null;
+  }
+
+  const result = await db.select().from(userPlans).where(eq(userPlans.userId, userId)).limit(1);
+  if (result.length === 0) return null;
+  return { planData: result[0].planData, clientUpdatedAt: result[0].clientUpdatedAt };
+}

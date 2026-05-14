@@ -93,6 +93,74 @@
   --emerald: oklch(0.696 0.17 162.48);
   --rose: oklch(0.64 0.23 15.5);
   --amber: oklch(0.82 0.17 85);
+
+  /* Dashboard structural backgrounds */
+  --page-bg: #080a0f;
+  --header-bg: rgba(8,10,15,0.95);
+  --card-bg: #0d1117;
+  --card-bg-subtle: rgba(255,255,255,0.03);
+  --modal-bg: #0d1117;
+  --input-bg: rgba(255,255,255,0.05);
+  --input-border: rgba(255,255,255,0.10);
+  --text-primary: #ffffff;
+  --text-secondary: rgb(148,163,184);
+  --text-muted: rgb(100,116,139);
+  --border-subtle: rgba(255,255,255,0.08);
+  --border-medium: rgba(255,255,255,0.12);
+  --tooltip-bg: #0d1117;
+}
+
+.light {
+  --background: oklch(0.98 0.002 265);
+  --foreground: oklch(0.12 0.01 265);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.12 0.01 265);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.12 0.01 265);
+  --primary: oklch(0.55 0.17 162.48);
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.94 0.004 265);
+  --secondary-foreground: oklch(0.12 0.01 265);
+  --muted: oklch(0.94 0.004 265);
+  --muted-foreground: oklch(0.45 0.01 265);
+  --accent: oklch(0.94 0.004 265);
+  --accent-foreground: oklch(0.12 0.01 265);
+  --destructive: oklch(0.55 0.23 15.5);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0 0 0 / 10%);
+  --input: oklch(0 0 0 / 8%);
+  --ring: oklch(0.55 0.17 162.48);
+  --chart-1: oklch(0.55 0.17 162.48);
+  --chart-2: oklch(0.55 0.23 15.5);
+  --chart-3: oklch(0.65 0.17 85);
+  --chart-4: oklch(0.45 0.18 265);
+  --chart-5: oklch(0.55 0.15 200);
+  --sidebar: oklch(0.96 0.003 265);
+  --sidebar-foreground: oklch(0.12 0.01 265);
+  --sidebar-primary: oklch(0.55 0.17 162.48);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.92 0.004 265);
+  --sidebar-accent-foreground: oklch(0.12 0.01 265);
+  --sidebar-border: oklch(0 0 0 / 8%);
+  --sidebar-ring: oklch(0.55 0.17 162.48);
+  --emerald: oklch(0.55 0.17 162.48);
+  --rose: oklch(0.55 0.23 15.5);
+  --amber: oklch(0.65 0.17 85);
+
+  /* Dashboard structural backgrounds — light overrides */
+  --page-bg: #f0f4f8;
+  --header-bg: rgba(240,244,248,0.95);
+  --card-bg: #ffffff;
+  --card-bg-subtle: rgba(0,0,0,0.02);
+  --modal-bg: #ffffff;
+  --input-bg: rgba(0,0,0,0.04);
+  --input-border: rgba(0,0,0,0.12);
+  --text-primary: #0f172a;
+  --text-secondary: rgb(71,85,105);
+  --text-muted: rgb(100,116,139);
+  --border-subtle: rgba(0,0,0,0.08);
+  --border-medium: rgba(0,0,0,0.12);
+  --tooltip-bg: #ffffff;
 }
 
 @layer base {
