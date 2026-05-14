@@ -115,3 +115,6 @@
 ## Free Tier Debt Limit - Gap Fixes
 - [x] Show debts beyond index 3 with a locked/blurred overlay instead of hiding them
 - [x] Block adding a 4th+ debt in onboarding for free users (show upgrade CTA)
+
+## Bug Fixes
+- [x] Fix errors when opening Savings & Investments tab in dashboard (duplicate React key when savings goal = milestone value)

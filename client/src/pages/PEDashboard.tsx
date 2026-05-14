@@ -879,8 +879,8 @@ export default function Dashboard() {
               )}
               {/* Milestones */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4 sm:mb-5">
-                {[500, 1000, 5000, state.profile?.savingsGoal || 10000].map((m) => (
-                  <div key={m} className={`rounded-lg border p-2 text-center transition-all ${state.totalSaved >= m ? "border-emerald-500/40 bg-emerald-500/10" : "border-white/8 opacity-50"}`}>
+                {Array.from(new Set([500, 1000, 5000, state.profile?.savingsGoal || 10000])).map((m, i) => (
+                  <div key={`milestone-${i}-${m}`} className={`rounded-lg border p-2 text-center transition-all ${state.totalSaved >= m ? "border-emerald-500/40 bg-emerald-500/10" : "border-white/8 opacity-50"}`}>
                     {state.totalSaved >= m ? <CheckCircle2 size={14} className="text-emerald-400 mx-auto mb-1" /> : <div className="w-3.5 h-3.5 rounded-full border border-white/20 mx-auto mb-1" />}
                     <div className="text-xs font-bold" style={{ color: state.totalSaved >= m ? "#10b981" : "#64748b" }}>{currency}{m.toLocaleString()}</div>
                   </div>
