@@ -27,7 +27,14 @@ export const stripeRouter = router({
     .mutation(async ({ input, ctx }) => {
       const planKey: StripePlan = input.plan === "monthly" ? "pro_monthly" : "pro_yearly";
       const product = STRIPE_PRODUCTS[planKey];
-      const origin = (ctx.req.headers.origin as string) || input.returnUrl.split("/pro")[0];
+
+      // IMPORTANT: Use the origin from the frontend-supplied returnUrl.
+      // Do NOT use ctx.req.headers.origin — in production the tRPC request is
+      // server-to-server and the origin header is the server's internal address,
+      // not the user's browser domain. The frontend always passes
+      // window.location.origin + "/pro/dashboard" as returnUrl, so extracting
+      // the origin from that gives us the correct user-facing domain.
+      const origin = new URL(input.returnUrl).origin;
 
       // For authenticated users: create or retrieve their Stripe customer
       let stripeCustomerId: string | undefined;
@@ -75,7 +82,12 @@ export const stripeRouter = router({
             quantity: 1,
           },
         ],
-        success_url: `${origin}/pro/dashboard?upgraded=true`,
+        // success_url points to the dedicated /pro/success page which:
+        // 1. Activates Pro in localStorage immediately
+        // 2. Shows a payment confirmation screen
+        // 3. Redirects to /pro/dashboard after a short delay
+        // This avoids race conditions with the dashboard's setupComplete guard.
+        success_url: `${origin}/pro/success`,
         cancel_url: `${origin}/pro/pricing?cancelled=true`,
         client_reference_id: ctx.user?.id?.toString() || "guest",
         metadata: {
@@ -105,7 +117,6 @@ export const stripeRouter = router({
 
   /**
    * Cancel the user's active Stripe subscription immediately.
-   * Sets cancel_at_period_end = false for immediate cancellation.
    */
   cancelSubscription: protectedProcedure.mutation(async ({ ctx }) => {
     const dbUser = await getUserById(ctx.user.id);

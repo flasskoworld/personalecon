@@ -9,6 +9,7 @@ import PELanding from "./pages/PELanding";
 import PEOnboarding from "./pages/PEOnboarding";
 import PEDashboard from "./pages/PEDashboard";
 import PEPricing from "./pages/PEPricing";
+import PESuccess from "./pages/PESuccess";
 import { loadState } from "./lib/peStore";
 // Import useProStatus so the module-level upgrade param check runs at app startup,
 // persisting Pro status in localStorage before any routing guards execute.
@@ -59,6 +60,8 @@ function Router() {
       <Route path={"/pro/pricing"} component={PEPricing} />
       <Route path={"/pro/onboarding"} component={PEOnboarding} />
       <Route path={"/pro/dashboard"} component={PEDashboard} />
+      {/* Stripe success redirect — activates Pro and shows confirmation before going to dashboard */}
+      <Route path={"/pro/success"} component={PESuccess} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

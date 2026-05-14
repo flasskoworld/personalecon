@@ -136,3 +136,10 @@
 - [x] Update dashboard Cancel Subscription button to call server-side cancel instead of just clearing localStorage
 - [x] Update Pro status check to also verify against server-side subscription status for authenticated users
 - [x] Write vitest tests for the new stripe procedures (12 tests passing: stripeProducts config, getSubscriptionStatus logic, cancelSubscription logic, webhook handler logic)
+
+## Stripe Payment Flow Bug Fixes
+- [x] Fix success_url: pass origin from frontend input.returnUrl instead of relying on ctx.req.headers.origin (server-side origin is wrong in production)
+- [x] Fix Pro unlock on return: created dedicated /pro/success page as Stripe success_url — activates Pro immediately before any routing guards run
+- [x] Add payment success confirmation toast/banner when user returns from Stripe with ?upgraded=true — /pro/success page shows full confirmation screen
+- [x] Fix cancel subscription visibility: getSubscriptionStatus now runs for all authenticated users (not just when isPro is set)
+- [x] Add a dedicated /pro/success page as the Stripe success_url to reliably handle Pro activation before routing to dashboard

@@ -201,9 +201,12 @@ export default function Dashboard() {
   const { isAuthenticated } = useAuth();
   const cancelSubscriptionMutation = trpc.stripe.cancelSubscription.useMutation();
   const getPortalUrlMutation = trpc.stripe.getPortalUrl.useMutation();
+  // Always fetch subscription status when authenticated so we can:
+  // 1. Sync Pro status from server to localStorage (covers webhook-activated Pro)
+  // 2. Show cancel subscription option even if localStorage doesn't have Pro yet
   const { data: subscriptionStatus } = trpc.stripe.getSubscriptionStatus.useQuery(
     undefined,
-    { enabled: !!(isPro && isAuthenticated) }
+    { enabled: !!isAuthenticated }
   );
   // Sync server-side Pro status: if server confirms Pro but local state doesn't know, activate locally
   useEffect(() => {
