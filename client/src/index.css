@@ -520,7 +520,7 @@
   }
 
   /* Legacy emerald aliases (used inside dashboard) */
-  .card-glow-emerald { @apply card-glow-teal; }
+  .card-glow-emerald { box-shadow: 0 0 0 1px rgba(45,212,191,0.20), 0 4px 24px rgba(45,212,191,0.08); }
   .card-glow-amber {
     box-shadow: 0 0 0 1px oklch(0.82 0.17 85 / 20%), 0 4px 24px oklch(0.82 0.17 85 / 8%);
   }
@@ -536,7 +536,7 @@
     background: linear-gradient(90deg, oklch(0.60 0.14 185), oklch(0.78 0.14 185));
   }
   /* Legacy aliases */
-  .progress-emerald { @apply progress-teal; }
+  .progress-emerald { background: linear-gradient(90deg, oklch(0.60 0.14 185), oklch(0.78 0.14 185)); }
   .progress-amber {
     background: linear-gradient(90deg, oklch(0.65 0.17 85), oklch(0.82 0.17 85));
   }

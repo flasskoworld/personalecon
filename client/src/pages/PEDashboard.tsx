@@ -28,6 +28,25 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { toast } from "sonner";
 
+
+// ── Bloomberg Ticker Tape component ─────────────────────────────────────────
+function DashboardTicker({ items }: { items: { sym: string; val: string; note: string; up: boolean }[] }) {
+  const doubled = [...items, ...items];
+  return (
+    <div className="pe-ticker">
+      <div className="pe-ticker-track">
+        {doubled.map((item, i) => (
+          <span key={i} className="pe-ticker-item">
+            <span className="pe-ticker-sym">{item.sym}</span>
+            <span style={{color: '#F0EDE4', fontWeight: 600}}>{item.val}</span>
+            <span className={item.up ? "pe-ticker-up" : "pe-ticker-dn"}>{item.note}</span>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── SE HQ palette constants ───────────────────────────────────────────────────
 const GOLD = "#C9A84C";
 const GOLD_LIGHT = "#E8C97A";
@@ -498,7 +517,18 @@ export default function Dashboard() {
  { id: "savings", label: "Savings & Investments", icon: <TrendingUp size={15} /> },
  { id: "plan", label: "Game Plan", icon: <Target size={15} /> },
  ];
-
+ const debtFreeDate = currentSim.months > 0 ? getDebtFreeDate(currentSim.months) : null;
+ const emergencyFundMonths = totalMonthlyIncome > 0 ? (state.totalSaved / totalMonthlyIncome).toFixed(1) : "0.0";
+ const tickerItems = [
+   { sym: "NET WORTH", val: `${currency}${Math.abs(Math.round(netWorth)).toLocaleString()}`, note: netWorth >= 0 ? "\u25b2 POSITIVE" : "\u25bc NEGATIVE", up: netWorth >= 0 },
+   { sym: "DEBT REMAINING", val: `${currency}${Math.round(totalDebt).toLocaleString()}`, note: totalDebt > 0 ? `\u25bc ${state.strategy.toUpperCase()}` : "\u25b2 DEBT FREE", up: totalDebt === 0 },
+   { sym: "SAVINGS STACK", val: `${currency}${Math.round(state.totalSaved).toLocaleString()}`, note: state.profile.savingsGoal ? `${Math.round((state.totalSaved / state.profile.savingsGoal) * 100)}% OF GOAL` : "\u25b2 BUILDING", up: true },
+   { sym: "PORTFOLIO", val: `${currency}${Math.round(totalInvestmentValue).toLocaleString()}`, note: totalInvestmentGain >= 0 ? `\u25b2 +${currency}${Math.abs(Math.round(totalInvestmentGain)).toLocaleString()}` : `\u25bc -${currency}${Math.abs(Math.round(totalInvestmentGain)).toLocaleString()}`, up: totalInvestmentGain >= 0 },
+   { sym: "MONTHLY INCOME", val: `${currency}${Math.round(totalMonthlyIncome).toLocaleString()}`, note: state.profile.payFrequency?.toUpperCase() ?? "MONTHLY", up: true },
+   { sym: "DEBT FREE DATE", val: debtFreeDate ?? "TBD", note: totalDebt > 0 ? `\u25b2 ${currentSim.months} MONTHS` : "\u25b2 ACHIEVED", up: true },
+   { sym: "EMERGENCY FUND", val: `${emergencyFundMonths} MO`, note: parseFloat(emergencyFundMonths) >= 3 ? "\u25b2 SOLID" : "\u25b2 BUILDING", up: true },
+   { sym: "MONTHLY INTEREST", val: `${currency}${Math.round(totalMonthlyInterest).toLocaleString()}`, note: totalMonthlyInterest > 0 ? "COST TO WAIT" : "DEBT FREE", up: false },
+ ];
  return (
  <div
  className="min-h-screen" style={{color: '#F0EDE4', background: BG,
@@ -509,6 +539,8 @@ export default function Dashboard() {
  backgroundAttachment: "fixed",}}
  >
 
+ {/* BLOOMBERG TICKER TAPE */}
+ <DashboardTicker items={tickerItems} />
  {/* HEADER */}
  <header className="border-b sticky top-0 z-40" style={{ borderColor: "rgba(201,168,76,0.15)", background: "rgba(6,8,14,0.95)", backdropFilter: "blur(12px)" }}>
  <div className="max-w-7xl mx-auto px-3 sm:px-6 h-14 flex items-center justify-between">
