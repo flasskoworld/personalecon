@@ -200,3 +200,18 @@
 - [x] Remove .light CSS variable block from index.css
 - [x] Remove --pe-* CSS variable declarations added for light mode (were already scoped inside .light block)
 - [x] Revert App.tsx ThemeProvider to defaultTheme="dark" (fixed, no switching — removed switchable prop)
+
+## SE HQ Sovereign Dark Theme Redesign (v2)
+- [x] Apply gold #C9A84C primary palette (replacing emerald) across all pages
+- [x] Add Playfair Display (hero/404) + Space Mono (labels/buttons) to font stack
+- [x] Ledger grid background on all pages (CSS background-image, fixed)
+- [x] Bloomberg-style ticker tape animation on PELanding
+- [x] Animated counter stats on landing page hero
+- [x] Typewriter cycling headline on PELanding
+- [x] Terminal-style clock on PEDashboard ("NEXT PAY: XD XH XM")
+- [x] Sharp edges (zero border-radius), gold top-bar accents on cards/modals
+- [x] Full palette migration in PEDashboard: gold/teal/rose/indigo by semantic role
+- [x] Recharts restyled: teal savings areas, gold dashed goal line, mono tick fonts
+- [x] PoweredByFooter and ErrorBoundary restyled to SE HQ theme
+- [x] Fix syntax errors from zip (duplicate className=, duplicate style=, stray quotes)
+- [x] TypeScript: 0 errors | Tests: 18/18 passing
