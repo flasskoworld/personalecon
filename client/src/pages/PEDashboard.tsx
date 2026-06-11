@@ -545,7 +545,7 @@ export default function Dashboard() {
  <header className="border-b sticky top-0 z-40" style={{ borderColor: "rgba(201,168,76,0.15)", background: "rgba(6,8,14,0.95)", backdropFilter: "blur(12px)" }}>
  <div className="max-w-7xl mx-auto px-3 sm:px-6 h-14 flex items-center justify-between">
  <div className="flex items-center gap-2.5">
- <div className="w-7 h-7 flex items-center justify-center font-bold" style={{border: "1.5px solid #C9A84C", color: GOLD, ...mono, fontSize: '10px'}}>PE</div>
+ <img src="/manus-storage/pe-lion-crest-transparent_7855bd4b.png" alt="PE Lion Crest" style={{width:"32px",height:"32px",objectFit:"contain"}}/>
  <span className="text-sm font-bold hidden xs:inline sm:inline uppercase" style={{...syne, letterSpacing: "0.08em"}}>Personal Economy</span>
  {state.isDemo && <span className="uppercase border px-2 py-0.5" style={{fontSize: '8px', letterSpacing: '0.15em', background: 'rgba(129,140,248,0.1)', color: '#818CF8', borderColor: 'rgba(129,140,248,0.2)'}}>DEMO PREVIEW</span>}
  </div>

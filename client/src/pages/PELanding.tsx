@@ -152,7 +152,7 @@ export default function PELanding() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 md:h-16 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-2.5">
-            <div className="pe-logo-mark">PE</div>
+            <img src="/manus-storage/pe-lion-crest-transparent_7855bd4b.png" alt="PE Lion Crest" style={{width:"36px",height:"36px",objectFit:"contain"}}/>
             <div>
               <div className="pe-logo-name">Personal Economy</div>
               <div className="pe-logo-sub">by Street Economics</div>
@@ -636,7 +636,7 @@ export default function PELanding() {
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <div className="pe-logo-mark" style={{ width: "24px", height: "24px", fontSize: "9px" }}>PE</div>
+            <img src="/manus-storage/pe-lion-crest-transparent_7855bd4b.png" alt="PE Lion Crest" style={{width:"24px",height:"24px",objectFit:"contain"}}/>
             <span
               style={{
                 fontFamily: "'Syne', sans-serif",
