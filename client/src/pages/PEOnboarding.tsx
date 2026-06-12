@@ -375,7 +375,7 @@ export default function Onboarding() {
  {expenses.map((e, i) => (
  <div key={e.id} className={seCard} style={seCardStyle}>
  <div className="flex flex-col sm:flex-row sm:items-end gap-3">
- <div className="flex-1 min-w-0">
+ <div className="w-full sm:w-44">
  {i === 0 && <label className={labelClass} style={{...labelStyle, ...labelMono}}>Expense Name</label>}
  <input className={inputClass} style={inputStyle} placeholder="e.g. Rent" value={e.label} onChange={(ev) => updateExpense(e.id, { label: ev.target.value })} />
  </div>

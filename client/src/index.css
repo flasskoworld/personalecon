@@ -457,12 +457,12 @@
     line-height: 1;
   }
 
-  /* ── Landing — Feature section headings (Syne) ───────────────────────── */
+  /* ── Landing — Feature section headings (Playfair — matches CTA h2) ─── */
   .pe-section-h2 {
-    font-family: 'Syne', sans-serif;
-    font-size: clamp(26px, 3vw, 38px);
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(26px, 3vw, 42px);
     font-weight: 800;
-    letter-spacing: -0.025em;
+    letter-spacing: -0.01em;
     line-height: 1.1;
     color: var(--text-primary);
     margin-bottom: 10px;
