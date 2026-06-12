@@ -12,12 +12,53 @@ export interface UserProfile {
   currency: string; // "$" | "£" | "€"
 }
 
+export type BillingFrequency = "weekly" | "biweekly" | "monthly" | "quarterly" | "yearly";
+
+export const BILLING_FREQUENCY_LABELS: Record<BillingFrequency, string> = {
+  weekly: "Weekly",
+  biweekly: "Every 2 Weeks",
+  monthly: "Monthly",
+  quarterly: "Quarterly",
+  yearly: "Yearly",
+};
+
+/** Given a nextDueDate ISO string and a billingFrequency, compute the next occurrence after today */
+export function computeNextDueDate(nextDueDate: string, frequency: BillingFrequency): string {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  let d = new Date(nextDueDate);
+  d.setHours(0, 0, 0, 0);
+  // Advance until d is in the future
+  while (d <= today) {
+    switch (frequency) {
+      case "weekly": d.setDate(d.getDate() + 7); break;
+      case "biweekly": d.setDate(d.getDate() + 14); break;
+      case "monthly": d.setMonth(d.getMonth() + 1); break;
+      case "quarterly": d.setMonth(d.getMonth() + 3); break;
+      case "yearly": d.setFullYear(d.getFullYear() + 1); break;
+    }
+  }
+  return d.toISOString().split("T")[0];
+}
+
+/** Days until a given ISO date string (0 = today, negative = past) */
+export function daysUntil(isoDate: string): number {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const d = new Date(isoDate);
+  d.setHours(0, 0, 0, 0);
+  return Math.round((d.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+}
+
 export interface Expense {
   id: string;
   label: string;
   amount: number;
   category: "housing" | "transport" | "food" | "insurance" | "subscriptions" | "utilities" | "health" | "other";
   isEssential: boolean;
+  dueDay?: number; // legacy: day of month (1-31) — kept for backward compat
+  nextDueDate?: string; // ISO date string (YYYY-MM-DD) for next due date
+  billingFrequency?: BillingFrequency; // billing cycle
 }
 
 export interface Debt {
@@ -29,6 +70,9 @@ export interface Debt {
   minimumPayment: number;
   paid: number;
   color: string;
+  dueDay?: number; // legacy: day of month (1-31) — kept for backward compat
+  nextDueDate?: string; // ISO date string (YYYY-MM-DD) for next payment due date
+  billingFrequency?: BillingFrequency; // payment cycle
 }
 
 export interface AdditionalIncome {

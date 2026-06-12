@@ -215,3 +215,34 @@
 - [x] PoweredByFooter and ErrorBoundary restyled to SE HQ theme
 - [x] Fix syntax errors from zip (duplicate className=, duplicate style=, stray quotes)
 - [x] TypeScript: 0 errors | Tests: 18/18 passing
+
+## Bloomberg Ticker Tape on Dashboard
+- [x] Replace PE box with lion crest logo (transparent bg) in all page headers: PELanding, PEDashboard, PEOnboarding (main nav + footer)
+- [x] Add DashboardTicker component to PEDashboard with live user data (net worth, debt, savings, portfolio, income, debt-free date, emergency fund, monthly interest)
+- [x] Fix Tailwind v4 @apply alias errors (card-glow-emerald, progress-emerald) — replaced with inline CSS
+- [x] TypeScript: 0 errors | Tests: 18/18 passing
+
+## Strategy Info Popups + Bill Due Dates
+- [x] Add Avalanche info popup: plain-English explanation + when to use it
+- [x] Add Snowball info popup: plain-English explanation + when to use it
+- [x] Add comparison modal showing key difference between both methods (StrategyInfoModal component)
+- [x] Add due date field to expenses step in onboarding (day of month per expense, optional)
+- [x] Add due date field to debt/credit cards in onboarding (day of month per debt, optional)
+- [x] Show due dates on dashboard expense list with edit capability (gold DUE {day} badge + EditExpenseModal)
+- [x] Show due dates on dashboard debt cards with inline edit capability (gold DUE {day} badge + DebtEditModal)
+- [x] Persist due dates in local financial store (localStorage — dueDay field on Expense and Debt interfaces in peStore.ts)
+
+## Bill Due Date Cycle Tracking Upgrade
+- [ ] Upgrade Expense interface: replace dueDay (number) with nextDueDate (ISO string), billingFrequency (weekly|biweekly|monthly|quarterly|yearly), and computed recurringDay
+- [ ] Upgrade Debt interface: same fields as Expense
+- [ ] Update onboarding Expenses step: date picker for next due date + frequency dropdown
+- [ ] Update onboarding Debts step: date picker for next due date + frequency dropdown
+- [ ] Update AddExpenseModal: next due date + frequency fields
+- [ ] Update EditExpenseModal: pre-filled next due date + frequency, editable
+- [ ] Update AddDebtModal: next due date + frequency fields
+- [ ] Update DebtEditModal: pre-filled next due date + frequency, editable
+- [ ] Dashboard expense badge: show "DUE IN Xd" (days until next due) instead of raw day number
+- [ ] Dashboard debt badge: show "DUE IN Xd" with urgency color (red <3d, amber <7d, gold otherwise)
+- [ ] Fix lion crest logo in PELanding footer
+- [ ] Fix lion crest logo in PEDashboard footer
+- [ ] Fix lion crest logo in PEOnboarding footer

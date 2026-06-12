@@ -11,6 +11,7 @@ import {
  sortDebtsByStrategy, simulatePayoff, getDebtFreeDate, formatCurrency,
  buildSavingsProjection, monthlyInterestCost, generateInvestmentId, getInvestColor,
  generateDebtId, generateExpenseId, getDebtColor,
+ BillingFrequency, BILLING_FREQUENCY_LABELS, computeNextDueDate, daysUntil,
  Debt, Investment, Expense,
 } from "@/lib/peStore";
 import {
@@ -24,6 +25,7 @@ import {
  Zap, BookOpen, Info, Lightbulb,
 } from "lucide-react";
 import { useCloudSync } from "@/hooks/useCloudSync";
+import { StrategyInfoModal } from "@/components/StrategyInfoModal";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { toast } from "sonner";
@@ -165,14 +167,15 @@ function ModalHeader({ title, sub, onClose }: { title: string; sub?: string; onC
 function DebtEditModal({ debt, onSave, onClose, currency }: {
  debt: Debt; onSave: (fields: Partial<Debt>) => void; onClose: () => void; currency: string;
 }) {
- const [name, setName] = useState(debt.name);
+  const [name, setName] = useState(debt.name);
  const [balance, setBalance] = useState(String(debt.balance));
  const [apr, setApr] = useState(String(debt.apr));
  const [minPay, setMinPay] = useState(String(debt.minimumPayment));
  const [paid, setPaid] = useState(String(debt.paid));
-
+ const [nextDueDate, setNextDueDate] = useState(debt.nextDueDate || "");
+ const [billingFrequency, setBillingFrequency] = useState<BillingFrequency | "">(debt.billingFrequency || "");
  const save = () => {
- onSave({ name, balance: Number(balance), apr: Number(apr), minimumPayment: Number(minPay), paid: Number(paid) });
+ onSave({ name, balance: Number(balance), apr: Number(apr), minimumPayment: Number(minPay), paid: Number(paid), nextDueDate: nextDueDate || undefined, billingFrequency: billingFrequency || undefined });
  onClose();
  toast.success("Debt updated");
  };
@@ -197,6 +200,15 @@ function DebtEditModal({ debt, onSave, onClose, currency }: {
  <div><label className={labelClass} style={{...labelStyle, ...mono}}>Total Paid So Far</label>
  <div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm" style={{color: '#7A8090'}}>{currency}</span>
  <input className={inputClass + " pl-6"} style={inputStyle} type="number" value={paid} onChange={(e) => setPaid(e.target.value)} /></div></div>
+ <div><label className={labelClass} style={{...labelStyle, ...mono}}>Next Payment Due Date</label>
+ <input className={inputClass} style={{...inputStyle, colorScheme: "dark"}} type="date" title="Next date this payment is due" value={nextDueDate} onChange={(e) => setNextDueDate(e.target.value)} /></div>
+ <div><label className={labelClass} style={{...labelStyle, ...mono}}>Payment Cycle</label>
+ <select className={"w-full border border-white/8 px-3 py-2 text-sm focus:outline-none transition-all"} style={{background: "#0B0E16", color: "#F0EDE4"}} value={billingFrequency} onChange={(e) => setBillingFrequency(e.target.value as BillingFrequency | "")}>
+ <option value="">-- Cycle --</option>
+ {(Object.keys(BILLING_FREQUENCY_LABELS) as BillingFrequency[]).map((f) => (
+ <option key={f} value={f}>{BILLING_FREQUENCY_LABELS[f]}</option>
+ ))}
+ </select></div>
  </div>
  {Number(balance) > 0 && Number(apr) > 0 && (
  <div className="border p-3 flex items-center justify-between" style={{borderColor: 'rgba(224,82,82,0.15)', background: 'rgba(224,82,82,0.05)'}}>
@@ -346,7 +358,8 @@ function AddExpenseModal({ onSave, onClose, currency }: {
  const [amount, setAmount] = useState("");
  const [category, setCategory] = useState<Expense["category"]>("other");
  const [isEssential, setIsEssential] = useState(false);
-
+ const [nextDueDate, setNextDueDate] = useState("");
+ const [billingFrequency, setBillingFrequency] = useState<BillingFrequency | "">("");
  const save = () => {
  if (!label.trim()) { toast.error("Enter an expense name"); return; }
  if (!amount || Number(amount) <= 0) { toast.error("Enter a valid amount"); return; }
@@ -356,6 +369,8 @@ function AddExpenseModal({ onSave, onClose, currency }: {
  amount: Number(amount),
  category,
  isEssential,
+ nextDueDate: nextDueDate || undefined,
+ billingFrequency: billingFrequency || undefined,
  };
  onSave(expense);
  onClose();
@@ -394,6 +409,19 @@ function AddExpenseModal({ onSave, onClose, currency }: {
  <div className="uppercase" style={{fontSize: '8px', letterSpacing: '0.1em', color: '#4A505E'}}>{isEssential ? "Rent · utilities · insurance" : "Subscriptions · dining · entertainment"}</div>
  </div>
  </div>
+ <div>
+ <label className={labelClass} style={{...labelStyle, ...mono}}>Next Due Date <span style={{color:'#4A505E'}}>(optional)</span></label>
+ <input className={inputClass} style={{...inputStyle, colorScheme: "dark"}} type="date" title="Next date this bill is due" value={nextDueDate} onChange={(e) => setNextDueDate(e.target.value)} />
+ </div>
+ <div>
+ <label className={labelClass} style={{...labelStyle, ...mono}}>Billing Cycle <span style={{color:'#4A505E'}}>(optional)</span></label>
+ <select className={"w-full border border-white/8 px-3 py-2 text-sm focus:outline-none transition-all"} style={{background: "#0B0E16", color: "#F0EDE4"}} value={billingFrequency} onChange={(e) => setBillingFrequency(e.target.value as BillingFrequency | "")}>
+ <option value="">-- Cycle --</option>
+ {(Object.keys(BILLING_FREQUENCY_LABELS) as BillingFrequency[]).map((f) => (
+ <option key={f} value={f}>{BILLING_FREQUENCY_LABELS[f]}</option>
+ ))}
+ </select>
+ </div>
  </div>
  <div className="flex gap-3 px-5 pb-5 pt-3 border-t border-white/6">
  <button onClick={onClose} className={"flex-1 py-2.5 " + btnGhost} style={{...btnGhostStyle, ...mono}}>Cancel</button>
@@ -412,11 +440,12 @@ function EditExpenseModal({ expense, onSave, onClose, currency }: {
  const [amount, setAmount] = useState(String(expense.amount));
  const [category, setCategory] = useState<Expense["category"]>(expense.category);
  const [isEssential, setIsEssential] = useState(expense.isEssential);
-
+ const [nextDueDate, setNextDueDate] = useState(expense.nextDueDate || "");
+ const [billingFrequency, setBillingFrequency] = useState<BillingFrequency | "">(expense.billingFrequency || "");
  const save = () => {
  if (!label.trim()) { toast.error("Enter an expense name"); return; }
  if (!amount || Number(amount) <= 0) { toast.error("Enter a valid amount"); return; }
- onSave(expense.id, { label: label.trim(), amount: Number(amount), category, isEssential });
+ onSave(expense.id, { label: label.trim(), amount: Number(amount), category, isEssential, nextDueDate: nextDueDate || undefined, billingFrequency: billingFrequency || undefined });
  onClose();
  toast.success(`${label} updated`);
  };
@@ -453,6 +482,19 @@ function EditExpenseModal({ expense, onSave, onClose, currency }: {
  <div className="uppercase" style={{fontSize: '8px', letterSpacing: '0.1em', color: '#4A505E'}}>{isEssential ? "Rent · utilities · insurance" : "Subscriptions · dining · entertainment"}</div>
  </div>
  </div>
+ <div>
+ <label className={labelClass} style={{...labelStyle, ...mono}}>Next Due Date <span style={{color:'#4A505E'}}>(optional)</span></label>
+ <input className={inputClass} style={{...inputStyle, colorScheme: "dark"}} type="date" title="Next date this bill is due" value={nextDueDate} onChange={(e) => setNextDueDate(e.target.value)} />
+ </div>
+ <div>
+ <label className={labelClass} style={{...labelStyle, ...mono}}>Billing Cycle <span style={{color:'#4A505E'}}>(optional)</span></label>
+ <select className={"w-full border border-white/8 px-3 py-2 text-sm focus:outline-none transition-all"} style={{background: "#0B0E16", color: "#F0EDE4"}} value={billingFrequency} onChange={(e) => setBillingFrequency(e.target.value as BillingFrequency | "")}>
+ <option value="">-- Cycle --</option>
+ {(Object.keys(BILLING_FREQUENCY_LABELS) as BillingFrequency[]).map((f) => (
+ <option key={f} value={f}>{BILLING_FREQUENCY_LABELS[f]}</option>
+ ))}
+ </select>
+ </div>
  </div>
  <div className="flex gap-3 px-5 pb-5 pt-3 border-t border-white/6">
  <button onClick={onClose} className={"flex-1 py-2.5 " + btnGhost} style={{...btnGhostStyle, ...mono}}>Cancel</button>
@@ -478,6 +520,7 @@ export default function Dashboard() {
  const [saveAmount, setSaveAmount] = useState("");
  const [showReset, setShowReset] = useState(false);
  const [showGoalModal, setShowGoalModal] = useState(false);
+ const [showStrategyInfo, setShowStrategyInfo] = useState(false);
  const [goalInput, setGoalInput] = useState("");
  // Income editor state (must be declared before early return to follow rules of hooks)
  const [showIncomeEditor, setShowIncomeEditor] = useState(false);
@@ -902,6 +945,14 @@ export default function Dashboard() {
  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
  <div className="flex items-center gap-2 flex-wrap">
  <span className="uppercase" style={{fontSize: '9px', letterSpacing: '0.15em', color: '#4A505E'}}>Strategy:</span>
+ <button
+   onClick={() => setShowStrategyInfo(true)}
+   className="flex items-center justify-center border transition-all hover:opacity-80"
+   style={{width:'16px', height:'16px', borderColor:'rgba(201,168,76,0.3)', color:'#C9A84C', borderRadius:'50%'}}
+   title="What do these mean?"
+ >
+   <Info size={9} />
+ </button>
  {(["snowball", "avalanche"] as const).map((s) => (
  <button
  key={s}
@@ -971,6 +1022,12 @@ export default function Dashboard() {
  <div className="flex items-center gap-2">
  {isTarget && !isPaidOff && <span className="font-bold px-2 py-0.5" style={{...mono, background: debt.color + "20", color: debt.color, fontSize: '8px', letterSpacing: '0.15em'}}>TARGET</span>}
  {isPaidOff && <span className="font-bold px-2 py-0.5" style={{fontSize: '8px', letterSpacing: '0.15em', color: '#2DD4BF', background: 'rgba(45,212,191,0.1)'}}>PAID ✓</span>}
+ {debt.nextDueDate && !isPaidOff && (() => {
+  const d = daysUntil(computeNextDueDate(debt.nextDueDate, debt.billingFrequency || "monthly"));
+  const urgencyColor = d <= 3 ? '#E05252' : d <= 7 ? '#F59E0B' : '#C9A84C';
+  const urgencyBg = d <= 3 ? 'rgba(224,82,82,0.10)' : d <= 7 ? 'rgba(245,158,11,0.10)' : 'rgba(201,168,76,0.08)';
+  return <span className="font-bold px-2 py-0.5" title={`Next payment due ${new Date(computeNextDueDate(debt.nextDueDate, debt.billingFrequency || "monthly")).toLocaleDateString()}`} style={{fontSize: '8px', letterSpacing: '0.12em', color: urgencyColor, background: urgencyBg, cursor: 'default'}}>{d === 0 ? 'DUE TODAY' : d < 0 ? 'OVERDUE' : `DUE IN ${d}D`}</span>;
+})()}
  <button
  onClick={() => setEditingDebt(debt)}
  className="hover:text-[#F0EDE4] p-1.5 transition-all" style={{color: '#4A505E'}}
@@ -1118,6 +1175,12 @@ export default function Dashboard() {
  </div>
  <div className="flex items-center gap-2">
  {!e.isEssential && <span className="uppercase px-2 py-0.5" style={{fontSize: '8px', letterSpacing: '0.1em', color: '#E05252', background: 'rgba(224,82,82,0.1)'}}>cuttable</span>}
+ {e.nextDueDate && (() => {
+  const d = daysUntil(computeNextDueDate(e.nextDueDate, e.billingFrequency || "monthly"));
+  const urgencyColor = d <= 3 ? '#E05252' : d <= 7 ? '#F59E0B' : '#C9A84C';
+  const urgencyBg = d <= 3 ? 'rgba(224,82,82,0.10)' : d <= 7 ? 'rgba(245,158,11,0.10)' : 'rgba(201,168,76,0.08)';
+  return <span className="uppercase px-2 py-0.5" title={`Next due ${new Date(computeNextDueDate(e.nextDueDate, e.billingFrequency || "monthly")).toLocaleDateString()}`} style={{fontSize: '8px', letterSpacing: '0.1em', color: urgencyColor, background: urgencyBg, cursor: 'default'}}>{d === 0 ? 'DUE TODAY' : d < 0 ? 'OVERDUE' : `DUE IN ${d}D`}</span>;
+})()}
  <span className="text-sm font-bold" style={{color: '#F0EDE4'}}>{currency}{e.amount.toLocaleString()}</span>
  <button
  onClick={() => setEditingExpense(e)}
@@ -1771,7 +1834,7 @@ export default function Dashboard() {
  {/* Top row: branding + powered by + privacy note */}
  <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
  <div className="flex items-center gap-2">
- <div className="w-5 h-5 flex items-center justify-center font-bold" style={{border: "1px solid #C9A84C", color: GOLD, ...mono, fontSize: '8px'}}>PE</div>
+ <img src="/manus-storage/pe-lion-crest-transparent_7855bd4b.png" alt="PE Lion Crest" style={{width:"20px",height:"20px",objectFit:"contain"}}/>
  <span className="font-semibold" style={{fontSize: '10px', color: '#4A505E'}}>Personal Economy</span>
  </div>
  <PoweredByBadge />
@@ -1827,6 +1890,7 @@ export default function Dashboard() {
  </div>
  )}
 
+ <StrategyInfoModal open={showStrategyInfo} onClose={() => setShowStrategyInfo(false)} />
  </div>
  );
 }

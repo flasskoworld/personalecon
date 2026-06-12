@@ -9,7 +9,8 @@ import { useLocation } from "wouter";
 import { useStore } from "@/hooks/usePEStore";
 import {
  UserProfile, Expense, Debt, Investment,
- PayFrequency, generateDebtId, generateExpenseId, generateInvestmentId,
+ PayFrequency, BillingFrequency, BILLING_FREQUENCY_LABELS,
+ generateDebtId, generateExpenseId, generateInvestmentId,
  getDebtColor, getInvestColor,
 } from "@/lib/peStore";
 import { Plus, Trash2, ArrowRight, ArrowLeft, CheckCircle2, DollarSign } from "lucide-react";
@@ -391,6 +392,31 @@ export default function Onboarding() {
  {EXPENSE_CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
  </select>
  </div>
+ <div className="w-full sm:w-36">
+ {i === 0 && <label className={labelClass} style={{...labelStyle, ...labelMono}}>Next Due Date</label>}
+ <input
+ className={inputClass}
+ style={{ ...inputStyle, colorScheme: "dark" }}
+ type="date"
+ title="Next date this bill is due"
+ value={e.nextDueDate || ""}
+ onChange={(ev) => updateExpense(e.id, { nextDueDate: ev.target.value || undefined })}
+ />
+ </div>
+ <div className="w-full sm:w-32">
+ {i === 0 && <label className={labelClass} style={{...labelStyle, ...labelMono}}>Billing Cycle</label>}
+ <select
+ className={selectClass}
+ style={selectStyle}
+ value={e.billingFrequency || ""}
+ onChange={(ev) => updateExpense(e.id, { billingFrequency: ev.target.value ? ev.target.value as BillingFrequency : undefined })}
+ >
+ <option value="">-- Cycle --</option>
+ {(Object.keys(BILLING_FREQUENCY_LABELS) as BillingFrequency[]).map((f) => (
+ <option key={f} value={f}>{BILLING_FREQUENCY_LABELS[f]}</option>
+ ))}
+ </select>
+ </div>
  <div className="flex items-center justify-between sm:justify-start gap-3 sm:gap-2">
  <label className="flex items-center gap-1.5 cursor-pointer">
  <input type="checkbox" checked={e.isEssential} onChange={(ev) => updateExpense(e.id, { isEssential: ev.target.checked })} className="w-3.5 h-3.5" />
@@ -500,6 +526,31 @@ export default function Onboarding() {
  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm" style={{color: '#7A8090'}}>$</span>
  <input className={inputClass + " pl-6"} style={inputStyle} type="number" placeholder="0" value={d.minimumPayment || ""} onChange={(e) => updateDebt(d.id, { minimumPayment: Number(e.target.value) })} />
  </div>
+ </div>
+ <div>
+ <label className={labelClass} style={{...labelStyle, ...labelMono}}>Next Payment Due Date</label>
+ <input
+ className={inputClass}
+ style={{ ...inputStyle, colorScheme: "dark" }}
+ type="date"
+ title="Next date this payment is due"
+ value={d.nextDueDate || ""}
+ onChange={(e) => updateDebt(d.id, { nextDueDate: e.target.value || undefined })}
+ />
+ </div>
+ <div>
+ <label className={labelClass} style={{...labelStyle, ...labelMono}}>Payment Cycle</label>
+ <select
+ className={selectClass}
+ style={selectStyle}
+ value={d.billingFrequency || ""}
+ onChange={(e) => updateDebt(d.id, { billingFrequency: e.target.value ? e.target.value as BillingFrequency : undefined })}
+ >
+ <option value="">-- Cycle --</option>
+ {(Object.keys(BILLING_FREQUENCY_LABELS) as BillingFrequency[]).map((f) => (
+ <option key={f} value={f}>{BILLING_FREQUENCY_LABELS[f]}</option>
+ ))}
+ </select>
  </div>
  </div>
  </div>
