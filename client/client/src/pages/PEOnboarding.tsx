@@ -236,7 +236,7 @@ export default function Onboarding() {
  style={{ borderColor: "rgba(201,168,76,0.15)", background: "rgba(6,8,14,0.95)", backdropFilter: "blur(12px)" }}
  >
  <div className="flex items-center gap-2.5">
- <img src="/manus-storage/pe-lion-crest-transparent_7855bd4b.png" alt="PE Lion Crest" style={{width:"32px",height:"32px",objectFit:"contain"}}/>
+ <img src="/evergreen-icon.png" alt="Evergreen Icon" style={{width:"32px",height:"32px",objectFit:"contain"}}/>
  <div>
  <div className="font-bold uppercase leading-tight" style={{fontFamily: "'Syne', sans-serif", fontSize: '12px', letterSpacing: '0.1em'}}>Personal Economy</div>
  <div className="uppercase leading-tight" style={{fontSize: '7px', letterSpacing: '0.2em', color: '#C9A84C'}}>Setup Protocol</div>
@@ -731,7 +731,7 @@ export default function Onboarding() {
  <footer className="border-t py-4 mt-8" style={{ borderColor: "rgba(201,168,76,0.12)" }}>
  <div className="max-w-2xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-center justify-between gap-3">
  <div className="flex items-center gap-2">
- <img src="/manus-storage/pe-lion-crest-transparent_7855bd4b.png" alt="PE Lion Crest" style={{width:"20px",height:"20px",objectFit:"contain"}}/>
+ <img src="/evergreen-icon.png" alt="Evergreen Icon" style={{width:"20px",height:"20px",objectFit:"contain"}}/>
  <span className="font-semibold" style={{fontFamily: "'Syne', sans-serif", fontSize: '10px', color: '#4A505E'}}>Personal Economy</span>
  </div>
  <PoweredByBadge />

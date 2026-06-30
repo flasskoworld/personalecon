@@ -588,7 +588,7 @@ export default function Dashboard() {
  <header className="border-b sticky top-0 z-40" style={{ borderColor: "rgba(201,168,76,0.15)", background: "rgba(6,8,14,0.95)", backdropFilter: "blur(12px)" }}>
  <div className="max-w-7xl mx-auto px-3 sm:px-6 h-14 flex items-center justify-between">
  <div className="flex items-center gap-2.5">
- <img src="/manus-storage/pe-lion-crest-transparent_7855bd4b.png" alt="PE Lion Crest" style={{width:"32px",height:"32px",objectFit:"contain"}}/>
+ <img src="/evergreen-icon.png" alt="Evergreen Icon" style={{width:"32px",height:"32px",objectFit:"contain"}}/>
  <span className="text-sm font-bold hidden xs:inline sm:inline uppercase" style={{...syne, letterSpacing: "0.08em"}}>Personal Economy</span>
  {state.isDemo && <span className="uppercase border px-2 py-0.5" style={{fontSize: '8px', letterSpacing: '0.15em', background: 'rgba(129,140,248,0.1)', color: '#818CF8', borderColor: 'rgba(129,140,248,0.2)'}}>DEMO PREVIEW</span>}
  </div>
@@ -1834,7 +1834,7 @@ export default function Dashboard() {
  {/* Top row: branding + powered by + privacy note */}
  <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
  <div className="flex items-center gap-2">
- <img src="/manus-storage/pe-lion-crest-transparent_7855bd4b.png" alt="PE Lion Crest" style={{width:"20px",height:"20px",objectFit:"contain"}}/>
+ <img src="/evergreen-icon.png" alt="Evergreen Icon" style={{width:"20px",height:"20px",objectFit:"contain"}}/>
  <span className="font-semibold" style={{fontSize: '10px', color: '#4A505E'}}>Personal Economy</span>
  </div>
  <PoweredByBadge />
